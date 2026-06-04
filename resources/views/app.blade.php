@@ -3,6 +3,23 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        {{-- Default SEO Meta Tags --}}
+        <meta name="description" content="Rewind Nature Games - Play classic and modern single-player browser games like Checkers, Chess, Nine Men's Morris, and Rogue Grid with elegant UI and beautiful themes.">
+        
+        {{-- Open Graph / Facebook --}}
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://games.rewindnature.in/">
+        <meta property="og:title" content="Rewind Nature Games - Modern Browser Games">
+        <meta property="og:description" content="Play classic and modern single-player browser games like Checkers, Chess, Nine Men's Morris, and Rogue Grid.">
+        <meta property="og:image" content="https://games.rewindnature.in/logo.png">
+
+        {{-- Twitter --}}
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="https://games.rewindnature.in/">
+        <meta property="twitter:title" content="Rewind Nature Games - Modern Browser Games">
+        <meta property="twitter:description" content="Play classic and modern single-player browser games like Checkers, Chess, Nine Men's Morris, and Rogue Grid.">
+        <meta property="twitter:image" content="https://games.rewindnature.in/logo.png">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

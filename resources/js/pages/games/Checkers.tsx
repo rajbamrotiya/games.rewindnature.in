@@ -306,7 +306,20 @@ export default function Checkers() {
     if (!stats) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-300 overflow-hidden relative">
-                <Head title="Checkers" />
+                <Head>
+                    <title>Checkers - Rewind Nature Games</title>
+                    <meta name="description" content="Play Checkers online. A modern version of the classic draughts game with beautiful glassmorphism design." />
+                    <meta property="og:type" content="website" />
+                    <meta property="og:url" content="https://games.rewindnature.in/games/checkers" />
+                    <meta property="og:title" content="Checkers - Rewind Nature Games" />
+                    <meta property="og:description" content="Play Checkers online. A modern version of the classic draughts game with beautiful glassmorphism design." />
+                    <meta property="og:image" content="https://games.rewindnature.in/logo.png" />
+                    <meta property="twitter:card" content="summary_large_image" />
+                    <meta property="twitter:url" content="https://games.rewindnature.in/games/checkers" />
+                    <meta property="twitter:title" content="Checkers - Rewind Nature Games" />
+                    <meta property="twitter:description" content="Play Checkers online. A modern version of the classic draughts game." />
+                    <meta property="twitter:image" content="https://games.rewindnature.in/logo.png" />
+                </Head>
                 <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                     <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 rounded-full blur-[150px] mix-blend-screen animate-pulse duration-1000"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
@@ -348,7 +361,20 @@ export default function Checkers() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col items-center py-6 px-4 font-sans transition-colors duration-300 relative overflow-hidden selection:bg-indigo-500 selection:text-white">
-            <Head title="Checkers" />
+            <Head>
+                <title>Checkers - Rewind Nature Games</title>
+                <meta name="description" content="Play Checkers online. A modern version of the classic draughts game with beautiful glassmorphism design." />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://games.rewindnature.in/games/checkers" />
+                <meta property="og:title" content="Checkers - Rewind Nature Games" />
+                <meta property="og:description" content="Play Checkers online. A modern version of the classic draughts game with beautiful glassmorphism design." />
+                <meta property="og:image" content="https://games.rewindnature.in/logo.png" />
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content="https://games.rewindnature.in/games/checkers" />
+                <meta property="twitter:title" content="Checkers - Rewind Nature Games" />
+                <meta property="twitter:description" content="Play Checkers online. A modern version of the classic draughts game." />
+                <meta property="twitter:image" content="https://games.rewindnature.in/logo.png" />
+            </Head>
             
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">

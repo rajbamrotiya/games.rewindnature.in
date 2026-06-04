@@ -60,7 +60,24 @@ export default function GamesIndex() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] font-sans text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white overflow-hidden relative">
-            <Head title="Our Games - Rewind Nature Games" />
+            <Head>
+                <title>Our Games - Rewind Nature Games</title>
+                <meta name="description" content="Explore our collection of single-player browser games including Checkers, Chess, Nine Men's Morris, and Rogue Grid." />
+                
+                {/* Open Graph / Social Media */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://games.rewindnature.in/games" />
+                <meta property="og:title" content="Our Games - Rewind Nature Games" />
+                <meta property="og:description" content="Explore our collection of single-player browser games including Checkers, Chess, Nine Men's Morris, and Rogue Grid." />
+                <meta property="og:image" content="https://games.rewindnature.in/logo.png" />
+
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content="https://games.rewindnature.in/games" />
+                <meta property="twitter:title" content="Our Games - Rewind Nature Games" />
+                <meta property="twitter:description" content="Explore our collection of single-player browser games including Checkers, Chess, Nine Men's Morris, and Rogue Grid." />
+                <meta property="twitter:image" content="https://games.rewindnature.in/logo.png" />
+            </Head>
             
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
