@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Moon, Sun, HelpCircle, X, Shield, Zap, Skull, Settings, Trophy, DoorOpen } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
+import { submitScore } from '@/lib/leaderboard';
 
 interface GameStats {
     name: string;
@@ -91,6 +92,8 @@ export default function RogueGrid() {
             };
             setStats(newStats);
             setCookie('rogue_stats', JSON.stringify(newStats), 365);
+
+            submitScore('rogue-grid', stats.name, { win: won, loss: !won, score: won ? health + energy : 0 });
         }
     };
 

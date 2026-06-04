@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, RotateCcw } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
+import { submitScore } from '@/lib/leaderboard';
 
 type Piece = 'R' | 'B' | 'RK' | 'BK' | null; // R = Player, B = AI, K = King
 type BoardState = Piece[][];
@@ -87,6 +88,9 @@ export default function Checkers() {
             };
             setStats(newStats);
             setCookie('checkers_stats', JSON.stringify(newStats), 365);
+
+            if (winner === 'R') submitScore('checkers', stats.name, { win: true });
+            else if (winner === 'B') submitScore('checkers', stats.name, { loss: true });
         }
     };
 

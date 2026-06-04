@@ -10,6 +10,7 @@ Welcome to the **Rewind Nature Games** repository! This is a modern, single-play
 2. **Chess** - A fully playable single-player chess experience.
 3. **9 Kukri (Nine Men's Morris)** - An ancient strategy game featuring placement, movement, and flying phases.
 4. **Rogue Grid** - A unique grid-based roguelike puzzle game where you manage health and energy, fight enemies, use potions, and try to reach the exit. Includes customizable mutators to increase difficulty!
+5. **Flappy Bird** - The addictive arcade classic! Tap or press space to navigate through the pipes and set a high score.
 
 ## ✨ Features
 

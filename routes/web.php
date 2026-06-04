@@ -9,6 +9,11 @@ Route::inertia('/games/nine-mens-morris', 'games/NineMensMorris')->name('games.n
 Route::inertia('/games/checkers', 'games/Checkers')->name('games.checkers');
 Route::inertia('/games/chess', 'games/Chess')->name('games.chess');
 Route::inertia('/games/rogue-grid', 'games/RogueGrid')->name('games.rogue-grid');
+Route::inertia('/games/flappy-bird', 'games/FlappyBird')->name('games.flappy-bird');
+
+use App\Http\Controllers\LeaderboardController;
+Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+Route::post('/leaderboard', [LeaderboardController::class, 'store'])->name('leaderboard.store');
 
 Route::redirect('/admin', '/admin/dashboard');
 

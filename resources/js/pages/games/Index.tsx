@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, Trophy, Users, Shield, Zap } from 'lucide-react';
+import { Moon, Sun, Trophy, Users, Shield, Zap, Bird } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 export default function GamesIndex() {
@@ -45,6 +45,15 @@ export default function GamesIndex() {
             color: "emerald",
             route: "/games/rogue-grid",
             isNew: true,
+        },
+        {
+            id: 'flappy-bird',
+            title: "Flappy Bird",
+            description: "How far can you fly? Tap or press space to flap your wings and navigate through the pipes in this addictive arcade classic.",
+            icon: <Bird className="w-8 h-8" />,
+            color: "yellow",
+            route: "/games/flappy-bird",
+            isNew: true,
         }
     ];
 
@@ -54,6 +63,7 @@ export default function GamesIndex() {
             case 'red': return 'from-red-500 to-orange-500 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/20 hover:shadow-[0_0_30px_rgba(239,68,68,0.3)]';
             case 'blue': return 'from-blue-500 to-cyan-500 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)]';
             case 'emerald': return 'from-emerald-500 to-teal-500 text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 hover:shadow-[0_0_30px_rgba(16,185,129,0.3)]';
+            case 'yellow': return 'from-yellow-400 to-orange-400 text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-500/20 hover:shadow-[0_0_30px_rgba(250,204,21,0.3)]';
             default: return 'from-slate-500 to-slate-400 text-slate-600 bg-slate-100 hover:shadow-lg';
         }
     };
@@ -102,6 +112,7 @@ export default function GamesIndex() {
                         </button>
                         <Link href="/" className="text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors">Home</Link>
                         <Link href="/games" className="text-indigo-600 dark:text-indigo-400 font-bold">Games</Link>
+                        <Link href="/leaderboard" className="text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 transition-colors">Leaderboard</Link>
                     </nav>
                 </div>
             </header>

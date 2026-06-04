@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, ArrowLeft } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
+import { submitScore } from '@/lib/leaderboard';
 import { Chess as ChessGame, Move, Square } from 'chess.js';
 
 interface GameStats {
@@ -62,6 +63,9 @@ export default function Chess() {
             };
             setStats(newStats);
             setCookie('chess_stats', JSON.stringify(newStats), 365);
+            
+            if (winner === 'w') submitScore('chess', stats.name, { win: true });
+            else if (winner === 'b') submitScore('chess', stats.name, { loss: true });
         }
     };
 
@@ -158,8 +162,8 @@ export default function Chess() {
     const getPieceSymbol = (piece: { type: string, color: string } | null) => {
         if (!piece) return null;
         const symbols: Record<string, Record<string, string>> = {
-            'w': { 'p': '♙', 'n': '♘', 'b': '♗', 'r': '♖', 'q': '♕', 'k': '♔' },
-            'b': { 'p': '♟', 'n': '♞', 'b': '♝', 'r': '♜', 'q': '♛', 'k': '♚' }
+            'w': { 'p': '♙\uFE0E', 'n': '♘\uFE0E', 'b': '♗\uFE0E', 'r': '♖\uFE0E', 'q': '♕\uFE0E', 'k': '♔\uFE0E' },
+            'b': { 'p': '♟\uFE0E', 'n': '♞\uFE0E', 'b': '♝\uFE0E', 'r': '♜\uFE0E', 'q': '♛\uFE0E', 'k': '♚\uFE0E' }
         };
         return symbols[piece.color][piece.type];
     };

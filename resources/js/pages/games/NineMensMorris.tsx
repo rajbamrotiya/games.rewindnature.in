@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
+import { submitScore } from '@/lib/leaderboard';
 
 // Mill definitions
 const MILLS = [
@@ -107,6 +108,9 @@ export default function NineMensMorris() {
             };
             setStats(newStats);
             setCookie('nmm_stats', JSON.stringify(newStats), 365);
+            
+            if (winner === 'PLAYER') submitScore('nine-mens-morris', stats.name, { win: true });
+            else if (winner === 'AI') submitScore('nine-mens-morris', stats.name, { loss: true });
         }
     };
 
