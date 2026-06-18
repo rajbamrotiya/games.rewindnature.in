@@ -20,12 +20,29 @@ export default function Chess() {
     const [nameInput, setNameInput] = useState('');
     
     // Game State
-    const [game, setGame] = useState(new ChessGame());
+    const [game, setGame] = useState(() => {
+        const saved = localStorage.getItem('chess_fen');
+        try {
+            return saved ? new ChessGame(saved) : new ChessGame();
+        } catch {
+            return new ChessGame();
+        }
+    });
     const [board, setBoard] = useState(game.board());
     const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
     const [possibleMoves, setPossibleMoves] = useState<Move[]>([]);
-    const [gameOver, setGameOver] = useState<'w' | 'b' | 'draw' | null>(null);
-    const [message, setMessage] = useState('Welcome! You play as White.');
+    const [gameOver, setGameOver] = useState<'w' | 'b' | 'draw' | null>(() => {
+        return (localStorage.getItem('chess_gameOver') as 'w' | 'b' | 'draw') || null;
+    });
+    const [message, setMessage] = useState(() => {
+        return localStorage.getItem('chess_message') || 'Welcome! You play as White.';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('chess_fen', game.fen());
+        localStorage.setItem('chess_gameOver', gameOver || '');
+        localStorage.setItem('chess_message', message);
+    }, [board, gameOver, message, game]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -164,6 +181,9 @@ export default function Chess() {
         setPossibleMoves([]);
         setGameOver(null);
         setMessage('Welcome! You play as White.');
+        localStorage.removeItem('chess_fen');
+        localStorage.removeItem('chess_gameOver');
+        localStorage.removeItem('chess_message');
     };
 
     const getPieceSymbol = (piece: { type: string, color: string } | null) => {

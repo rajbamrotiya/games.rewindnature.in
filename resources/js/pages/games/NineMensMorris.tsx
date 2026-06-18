@@ -54,14 +54,40 @@ export default function NineMensMorris() {
     const [nameInput, setNameInput] = useState('');
     
     // Game State
-    const [board, setBoard] = useState<PlayerType[]>(Array(24).fill(null));
-    const [turn, setTurn] = useState<'PLAYER' | 'AI'>('PLAYER');
-    const [phase, setPhase] = useState<'PLACEMENT' | 'MOVEMENT'>('PLACEMENT');
-    const [unplacedTokens, setUnplacedTokens] = useState({ PLAYER: 9, AI: 9 });
+    const [board, setBoard] = useState<PlayerType[]>(() => {
+        const saved = localStorage.getItem('nmm_board');
+        return saved ? JSON.parse(saved) : Array(24).fill(null);
+    });
+    const [turn, setTurn] = useState<'PLAYER' | 'AI'>(() => {
+        return (localStorage.getItem('nmm_turn') as 'PLAYER' | 'AI') || 'PLAYER';
+    });
+    const [phase, setPhase] = useState<'PLACEMENT' | 'MOVEMENT'>(() => {
+        return (localStorage.getItem('nmm_phase') as 'PLACEMENT' | 'MOVEMENT') || 'PLACEMENT';
+    });
+    const [unplacedTokens, setUnplacedTokens] = useState(() => {
+        const saved = localStorage.getItem('nmm_unplacedTokens');
+        return saved ? JSON.parse(saved) : { PLAYER: 9, AI: 9 };
+    });
     const [selectedToken, setSelectedToken] = useState<number | null>(null);
-    const [isRemoving, setIsRemoving] = useState(false);
-    const [gameOver, setGameOver] = useState<'PLAYER' | 'AI' | null>(null);
-    const [message, setMessage] = useState('Welcome! You go first.');
+    const [isRemoving, setIsRemoving] = useState(() => {
+        return localStorage.getItem('nmm_isRemoving') === 'true';
+    });
+    const [gameOver, setGameOver] = useState<'PLAYER' | 'AI' | null>(() => {
+        return (localStorage.getItem('nmm_gameOver') as 'PLAYER' | 'AI') || null;
+    });
+    const [message, setMessage] = useState(() => {
+        return localStorage.getItem('nmm_message') || 'Welcome! You go first.';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('nmm_board', JSON.stringify(board));
+        localStorage.setItem('nmm_turn', turn);
+        localStorage.setItem('nmm_phase', phase);
+        localStorage.setItem('nmm_unplacedTokens', JSON.stringify(unplacedTokens));
+        localStorage.setItem('nmm_isRemoving', String(isRemoving));
+        localStorage.setItem('nmm_gameOver', gameOver || '');
+        localStorage.setItem('nmm_message', message);
+    }, [board, turn, phase, unplacedTokens, isRemoving, gameOver, message]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -350,6 +376,13 @@ export default function NineMensMorris() {
         setIsRemoving(false);
         setGameOver(null);
         setMessage('Welcome! You go first.');
+        localStorage.removeItem('nmm_board');
+        localStorage.removeItem('nmm_turn');
+        localStorage.removeItem('nmm_phase');
+        localStorage.removeItem('nmm_unplacedTokens');
+        localStorage.removeItem('nmm_isRemoving');
+        localStorage.removeItem('nmm_gameOver');
+        localStorage.removeItem('nmm_message');
     };
 
     if (!stats) {

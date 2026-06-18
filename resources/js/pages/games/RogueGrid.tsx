@@ -45,16 +45,48 @@ export default function RogueGrid() {
     const [nameInput, setNameInput] = useState('');
     
     // Config State
-    const [selectedMutators, setSelectedMutators] = useState<string[]>([]);
+    const [selectedMutators, setSelectedMutators] = useState<string[]>(() => {
+        const saved = localStorage.getItem('rogue_selectedMutators');
+        return saved ? JSON.parse(saved) : [];
+    });
     
     // Game State
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [grid, setGrid] = useState<GridCell[][]>([]);
-    const [playerPos, setPlayerPos] = useState<Position>({ r: 0, c: 0 });
-    const [health, setHealth] = useState(100);
-    const [energy, setEnergy] = useState(100);
-    const [gameOver, setGameOver] = useState<'win' | 'lose' | null>(null);
-    const [message, setMessage] = useState('Select your rules and start the run!');
+    const [isPlaying, setIsPlaying] = useState(() => {
+        return localStorage.getItem('rogue_isPlaying') === 'true';
+    });
+    const [grid, setGrid] = useState<GridCell[][]>(() => {
+        const saved = localStorage.getItem('rogue_grid');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [playerPos, setPlayerPos] = useState<Position>(() => {
+        const saved = localStorage.getItem('rogue_playerPos');
+        return saved ? JSON.parse(saved) : { r: 0, c: 0 };
+    });
+    const [health, setHealth] = useState(() => {
+        const saved = localStorage.getItem('rogue_health');
+        return saved ? parseInt(saved, 10) : 100;
+    });
+    const [energy, setEnergy] = useState(() => {
+        const saved = localStorage.getItem('rogue_energy');
+        return saved ? parseInt(saved, 10) : 100;
+    });
+    const [gameOver, setGameOver] = useState<'win' | 'lose' | null>(() => {
+        return (localStorage.getItem('rogue_gameOver') as 'win' | 'lose') || null;
+    });
+    const [message, setMessage] = useState(() => {
+        return localStorage.getItem('rogue_message') || 'Select your rules and start the run!';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('rogue_selectedMutators', JSON.stringify(selectedMutators));
+        localStorage.setItem('rogue_isPlaying', String(isPlaying));
+        localStorage.setItem('rogue_grid', JSON.stringify(grid));
+        localStorage.setItem('rogue_playerPos', JSON.stringify(playerPos));
+        localStorage.setItem('rogue_health', String(health));
+        localStorage.setItem('rogue_energy', String(energy));
+        localStorage.setItem('rogue_gameOver', gameOver || '');
+        localStorage.setItem('rogue_message', message);
+    }, [selectedMutators, isPlaying, grid, playerPos, health, energy, gameOver, message]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);

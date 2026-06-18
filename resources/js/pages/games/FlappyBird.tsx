@@ -34,19 +34,29 @@ export default function FlappyBird() {
     }, [isFullscreen]);
 
     // Game state
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isGameOver, setIsGameOver] = useState(false);
-    const [score, setScore] = useState(0);
-    const [message, setMessage] = useState('Press Space or Tap to Jump!');
+    const [isPlaying, setIsPlaying] = useState(() => localStorage.getItem('flappy_isPlaying') === 'true');
+    const [isGameOver, setIsGameOver] = useState(() => localStorage.getItem('flappy_isGameOver') === 'true');
+    const [score, setScore] = useState(() => parseInt(localStorage.getItem('flappy_score') || '0', 10));
+    const [message, setMessage] = useState(() => localStorage.getItem('flappy_message') || 'Press Space or Tap to Jump!');
     
     // Canvas reference for rendering
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef = useRef<number>();
     
     // Game variables (refs to avoid re-renders during loop)
-    const bird = useRef({ y: 300, velocity: 0, x: 100, radius: 15 });
-    const pipes = useRef<{x: number, topHeight: number, passed: boolean}[]>([]);
-    const frameCount = useRef(0);
+    const bird = useRef(JSON.parse(localStorage.getItem('flappy_bird') || 'null') || { y: 300, velocity: 0, x: 100, radius: 15 });
+    const pipes = useRef(JSON.parse(localStorage.getItem('flappy_pipes') || 'null') || []);
+    const frameCount = useRef(parseInt(localStorage.getItem('flappy_frameCount') || '0', 10));
+
+    useEffect(() => {
+        localStorage.setItem('flappy_isPlaying', isPlaying.toString());
+        localStorage.setItem('flappy_isGameOver', isGameOver.toString());
+        localStorage.setItem('flappy_score', score.toString());
+        localStorage.setItem('flappy_message', message);
+        localStorage.setItem('flappy_bird', JSON.stringify(bird.current));
+        localStorage.setItem('flappy_pipes', JSON.stringify(pipes.current));
+        localStorage.setItem('flappy_frameCount', frameCount.current.toString());
+    }, [isPlaying, isGameOver, score, message]);
 
     // Load stats on mount
     useEffect(() => {
@@ -88,6 +98,9 @@ export default function FlappyBird() {
         setIsGameOver(false);
         setIsPlaying(true);
         setMessage('');
+        localStorage.removeItem('flappy_bird');
+        localStorage.removeItem('flappy_pipes');
+        localStorage.removeItem('flappy_frameCount');
     };
 
     const jump = () => {
@@ -179,6 +192,14 @@ export default function FlappyBird() {
         }
 
         frameCount.current++;
+        
+        // Save physics state every second to allow resume mid-flight
+        if (frameCount.current % 60 === 0) {
+            localStorage.setItem('flappy_bird', JSON.stringify(bird.current));
+            localStorage.setItem('flappy_pipes', JSON.stringify(pipes.current));
+            localStorage.setItem('flappy_frameCount', frameCount.current.toString());
+        }
+
         if (isPlaying) {
             requestRef.current = requestAnimationFrame(gameLoop);
         }

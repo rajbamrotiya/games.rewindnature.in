@@ -44,13 +44,33 @@ export default function Checkers() {
     const [nameInput, setNameInput] = useState('');
     
     // Game State
-    const [board, setBoard] = useState<BoardState>(JSON.parse(JSON.stringify(INITIAL_BOARD)));
-    const [turn, setTurn] = useState<'R' | 'B'>('R');
+    const [board, setBoard] = useState<BoardState>(() => {
+        const saved = localStorage.getItem('checkers_board');
+        return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(INITIAL_BOARD));
+    });
+    const [turn, setTurn] = useState<'R' | 'B'>(() => {
+        return (localStorage.getItem('checkers_turn') as 'R' | 'B') || 'R';
+    });
     const [selectedPos, setSelectedPos] = useState<Position | null>(null);
     const [validMoves, setValidMoves] = useState<Move[]>([]);
-    const [mustJumpFrom, setMustJumpFrom] = useState<Position | null>(null);
-    const [gameOver, setGameOver] = useState<'R' | 'B' | null>(null);
-    const [message, setMessage] = useState('Welcome! You go first (Red).');
+    const [mustJumpFrom, setMustJumpFrom] = useState<Position | null>(() => {
+        const saved = localStorage.getItem('checkers_mustJumpFrom');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [gameOver, setGameOver] = useState<'R' | 'B' | null>(() => {
+        return (localStorage.getItem('checkers_gameOver') as 'R' | 'B') || null;
+    });
+    const [message, setMessage] = useState(() => {
+        return localStorage.getItem('checkers_message') || 'Welcome! You go first (Red).';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('checkers_board', JSON.stringify(board));
+        localStorage.setItem('checkers_turn', turn);
+        localStorage.setItem('checkers_mustJumpFrom', JSON.stringify(mustJumpFrom));
+        localStorage.setItem('checkers_gameOver', gameOver || '');
+        localStorage.setItem('checkers_message', message);
+    }, [board, turn, mustJumpFrom, gameOver, message]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -312,6 +332,11 @@ export default function Checkers() {
         setMustJumpFrom(null);
         setGameOver(null);
         setMessage('Welcome! You go first (Red).');
+        localStorage.removeItem('checkers_board');
+        localStorage.removeItem('checkers_turn');
+        localStorage.removeItem('checkers_mustJumpFrom');
+        localStorage.removeItem('checkers_gameOver');
+        localStorage.removeItem('checkers_message');
     };
 
     if (!stats) {
