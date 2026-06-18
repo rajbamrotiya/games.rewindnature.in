@@ -13,7 +13,7 @@ createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome' || name === 'games/NineMensMorris' || name === 'games/Index' || name === 'games/Checkers' || name === 'games/Chess' || name === 'games/RogueGrid' || name === 'games/FlappyBird' || name === 'leaderboard/Index':
+            case name === 'welcome' || name === 'games/NineMensMorris' || name === 'games/Index' || name === 'games/Checkers' || name === 'games/Chess' || name === 'games/RogueGrid' || name === 'games/FlappyBird' || name === 'games/Game2048' || name === 'leaderboard/Index':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

@@ -10,6 +10,7 @@ Route::inertia('/games/checkers', 'games/Checkers')->name('games.checkers');
 Route::inertia('/games/chess', 'games/Chess')->name('games.chess');
 Route::inertia('/games/rogue-grid', 'games/RogueGrid')->name('games.rogue-grid');
 Route::inertia('/games/flappy-bird', 'games/FlappyBird')->name('games.flappy-bird');
+Route::inertia('/games/2048', 'games/Game2048')->name('games.2048');
 
 use App\Http\Controllers\LeaderboardController;
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');

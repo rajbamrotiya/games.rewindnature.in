@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, Trophy, Users, Shield, Zap, Bird } from 'lucide-react';
+import { Moon, Sun, Trophy, Users, Shield, Zap, Bird, Grid } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 export default function GamesIndex() {
@@ -53,6 +53,15 @@ export default function GamesIndex() {
             icon: <Bird className="w-8 h-8" />,
             color: "yellow",
             route: "/games/flappy-bird",
+            isNew: true,
+        },
+        {
+            id: '2048',
+            title: "2048",
+            description: "Join the numbers and get to the 2048 tile! Swipe or use arrow keys to move the tiles.",
+            icon: <Grid className="w-8 h-8" />,
+            color: "yellow",
+            route: "/games/2048",
             isNew: true,
         }
     ];

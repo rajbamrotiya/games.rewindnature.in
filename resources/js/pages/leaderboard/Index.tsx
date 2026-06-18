@@ -25,6 +25,7 @@ const GAMES = [
     { id: 'nine-mens-morris', name: 'Nine Men\'s Morris' },
     { id: 'rogue-grid', name: 'Rogue Grid' },
     { id: 'flappy-bird', name: 'Flappy Bird' },
+    { id: '2048', name: '2048' },
 ];
 
 export default function Leaderboard({ leaderboards, currentGame }: Props) {
@@ -118,7 +119,7 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                                     </tr>
                                 ) : (
                                     leaderboards.map((lb, idx) => {
-                                        const isScoreGame = lb.game_id === 'flappy-bird' || lb.game_id === 'rogue-grid';
+                                        const isScoreGame = lb.game_id === 'flappy-bird' || lb.game_id === 'rogue-grid' || lb.game_id === '2048';
                                         return (
                                             <tr key={lb.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                                                 <td className="py-5 px-6">

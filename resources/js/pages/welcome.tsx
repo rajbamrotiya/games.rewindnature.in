@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { PlayCircle, Leaf, Trophy, Users, Star, Moon, Sun, Gamepad2, Zap, Shield, Bird } from 'lucide-react';
+import { PlayCircle, Leaf, Trophy, Users, Star, Moon, Sun, Gamepad2, Zap, Shield, Bird, Grid } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 export default function Welcome() {
@@ -172,6 +172,21 @@ export default function Welcome() {
                                 How far can you fly? Tap or press space to flap your wings and navigate through the pipes in this addictive arcade classic.
                             </p>
                             <Link href="/games/flappy-bird" className="inline-flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-bold hover:gap-3 transition-all">
+                                Launch Game <span className="text-xl">&rarr;</span>
+                            </Link>
+                        </div>
+                        
+                        {/* 2048 */}
+                        <div className="group relative bg-white/60 dark:bg-white/5 backdrop-blur-lg border border-slate-200 dark:border-white/10 rounded-3xl p-8 hover:shadow-[0_0_30px_rgba(250,204,21,0.3)] transition-all duration-500 hover:-translate-y-2 flex flex-col overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="w-14 h-14 rounded-2xl bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center mb-6 text-yellow-600 dark:text-yellow-400 group-hover:scale-110 transition-transform">
+                                <Grid className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">2048</h3>
+                            <p className="text-slate-600 dark:text-slate-400 mb-8 flex-grow font-medium">
+                                Join the numbers and get to the 2048 tile! Swipe or use arrow keys to move the tiles.
+                            </p>
+                            <Link href="/games/2048" className="inline-flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-bold hover:gap-3 transition-all">
                                 Launch Game <span className="text-xl">&rarr;</span>
                             </Link>
                         </div>

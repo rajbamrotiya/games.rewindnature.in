@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Moon, Sun, HelpCircle, X, RotateCcw } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { submitScore } from '@/lib/leaderboard';
+import FullscreenButton from '@/components/FullscreenButton';
 
 type Piece = 'R' | 'B' | 'RK' | 'BK' | null; // R = Player, B = AI, K = King
 type BoardState = Piece[][];
@@ -328,7 +329,8 @@ export default function Checkers() {
                     <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 rounded-full blur-[150px] mix-blend-screen animate-pulse duration-1000"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
                 </div>
-                <div className="absolute top-4 right-4 z-50">
+                <div className="absolute top-4 right-4 z-50 flex gap-2">
+                    <FullscreenButton />
                     <button 
                         onClick={toggleTheme} 
                         className="p-3 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:rotate-12"
@@ -414,6 +416,7 @@ export default function Checkers() {
                     >
                         <HelpCircle className="w-5 h-5" />
                     </button>
+                    <FullscreenButton />
                     <button 
                         onClick={toggleTheme} 
                         className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:rotate-12"
