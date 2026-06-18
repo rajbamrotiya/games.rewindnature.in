@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, RotateCcw, AlertTriangle, Maximize, Minimize, Menu } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { submitScore } from '@/lib/leaderboard';
-import FullscreenButton from '@/components/FullscreenButton';
+import { useFullscreen } from '@/hooks/use-fullscreen';
 
 // Mill definitions
 const MILLS = [
@@ -63,6 +63,12 @@ export default function NineMensMorris() {
     const [gameOver, setGameOver] = useState<'PLAYER' | 'AI' | null>(null);
     const [message, setMessage] = useState('Welcome! You go first.');
     const [showRules, setShowRules] = useState(false);
+    const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
+    const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
+
+    useEffect(() => {
+        if (!isFullscreen) setShowFullscreenInfo(false);
+    }, [isFullscreen]);
 
     // Helper functions for cookies
     const getCookie = (name: string) => {
@@ -368,7 +374,9 @@ export default function NineMensMorris() {
                     <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
                 </div>
                 <div className="absolute top-4 right-4 z-50 flex gap-2">
-                    <FullscreenButton />
+                    <button onClick={toggleFullscreen} className="p-3 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:scale-110" aria-label="Toggle fullscreen">
+                        <Maximize className="w-5 h-5" />
+                    </button>
                     <button 
                         onClick={toggleTheme} 
                         className="p-3 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:rotate-12"
@@ -454,7 +462,12 @@ export default function NineMensMorris() {
                     >
                         <HelpCircle className="w-5 h-5" />
                     </button>
-                    <FullscreenButton />
+                    <button 
+                        onClick={toggleFullscreen} 
+                        className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:scale-110"
+                    >
+                        {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    </button>
                     <button 
                         onClick={toggleTheme} 
                         className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:rotate-12"
@@ -465,8 +478,28 @@ export default function NineMensMorris() {
                 </div>
             </header>
 
-            <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12">
-                <div className="relative aspect-square w-full max-w-[550px] mx-auto bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-lg border border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+            <div ref={elementRef} className={`relative z-10 w-full transition-all ${isFullscreen ? 'flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0b0f19] h-screen max-w-full p-4' : 'max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12'}`}>
+                
+                {isFullscreen && (
+                    <>
+                        <button 
+                            onClick={() => setShowFullscreenInfo(true)}
+                            className="absolute top-4 left-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Menu"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <button 
+                            onClick={toggleFullscreen}
+                            className="absolute top-4 right-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Exit Fullscreen"
+                        >
+                            <Minimize className="w-6 h-6" />
+                        </button>
+                    </>
+                )}
+
+                <div className={`relative bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-lg border border-neutral-200 dark:border-neutral-800 transition-colors duration-300 w-full mx-auto ${isFullscreen ? 'max-w-[min(90vw,90vh)] aspect-square flex flex-col justify-center' : 'max-w-[550px] aspect-square'}`}>
                     <div className="absolute inset-0 m-10 lg:m-12">
                         {/* The Lines */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-neutral-300 dark:stroke-neutral-700 transition-colors duration-300" style={{ strokeWidth: '4px' }}>
@@ -502,53 +535,101 @@ export default function NineMensMorris() {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-6">
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
-                        <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
-                        <div className={`p-4 rounded-xl mb-4 shadow-inner ${
-                            turn === 'PLAYER' 
-                                ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20' 
-                                : 'bg-[#3e512c]/5 dark:bg-[#5d7a42]/10 text-[#3e512c] dark:text-[#a0cc77] border border-[#3e512c]/20 dark:border-[#5d7a42]/20'
-                        }`}>
-                            <p className="font-medium text-lg text-center">{message}</p>
+                {!isFullscreen && (
+                    <div className="flex flex-col gap-6">
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
+                            <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
+                            <div className={`p-4 rounded-xl mb-4 shadow-inner ${
+                                turn === 'PLAYER' 
+                                    ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20' 
+                                    : 'bg-[#3e512c]/5 dark:bg-[#5d7a42]/10 text-[#3e512c] dark:text-[#a0cc77] border border-[#3e512c]/20 dark:border-[#5d7a42]/20'
+                            }`}>
+                                <p className="font-medium text-lg text-center">{message}</p>
+                            </div>
+                            
+                            {gameOver && (
+                                <button 
+                                    onClick={resetGame}
+                                    className="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-semibold rounded-xl hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shadow-md"
+                                >
+                                    Play Again
+                                </button>
+                            )}
                         </div>
-                        
-                        {gameOver && (
-                            <button 
-                                onClick={resetGame}
-                                className="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-black font-semibold rounded-xl hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors shadow-md"
-                            >
-                                Play Again
-                            </button>
-                        )}
-                    </div>
 
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
-                        <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Game Info</h2>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                                <span className="text-neutral-500 dark:text-neutral-400">Phase</span>
-                                <span className="font-medium px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded text-sm text-neutral-700 dark:text-neutral-300 shadow-sm">
-                                    {phase === 'PLACEMENT' ? 'Placement' : 'Movement'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-rose-500 shadow-sm"></div>
-                                    <span className="text-neutral-500 dark:text-neutral-400">Your Unplaced</span>
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
+                            <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Game Info</h2>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                                    <span className="text-neutral-500 dark:text-neutral-400">Phase</span>
+                                    <span className="font-medium px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded text-sm text-neutral-700 dark:text-neutral-300 shadow-sm">
+                                        {phase === 'PLACEMENT' ? 'Placement' : 'Movement'}
+                                    </span>
                                 </div>
-                                <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.PLAYER}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-[#3e512c] dark:bg-[#5d7a42] shadow-sm"></div>
-                                    <span className="text-neutral-500 dark:text-neutral-400">AI Unplaced</span>
+                                <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-rose-500 shadow-sm"></div>
+                                        <span className="text-neutral-500 dark:text-neutral-400">Your Unplaced</span>
+                                    </div>
+                                    <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.PLAYER}</span>
                                 </div>
-                                <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.AI}</span>
+                                <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-[#3e512c] dark:bg-[#5d7a42] shadow-sm"></div>
+                                        <span className="text-neutral-500 dark:text-neutral-400">AI Unplaced</span>
+                                    </div>
+                                    <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.AI}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {isFullscreen && showFullscreenInfo && (
+                    <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm relative shadow-2xl border border-slate-200 dark:border-slate-700">
+                            <button onClick={() => setShowFullscreenInfo(false)} className="absolute top-4 right-4 p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                            <h2 className="text-2xl font-black mb-6 text-center text-slate-800 dark:text-white">Game Menu</h2>
+                            <div className="space-y-4">
+                                <div className={`p-4 rounded-xl mb-4 shadow-inner text-center font-medium ${
+                                    turn === 'PLAYER' 
+                                        ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20' 
+                                        : 'bg-[#3e512c]/5 dark:bg-[#5d7a42]/10 text-[#3e512c] dark:text-[#a0cc77] border border-[#3e512c]/20 dark:border-[#5d7a42]/20'
+                                }`}>
+                                    {message}
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Phase</span>
+                                    <span className="font-medium px-2 py-1 bg-neutral-200 dark:bg-neutral-800 rounded text-sm text-neutral-700 dark:text-neutral-300">
+                                        {phase === 'PLACEMENT' ? 'Placement' : 'Movement'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Wins</span>
+                                    <span className="font-black text-2xl text-emerald-500">{stats.wins}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Losses</span>
+                                    <span className="font-black text-2xl text-rose-500">{stats.losses}</span>
+                                </div>
+                                <button 
+                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    className="w-full bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
+                                >
+                                    <RotateCcw className="w-5 h-5" /> Restart Game
+                                </button>
+                                <button 
+                                    onClick={() => { toggleTheme(); }}
+                                    className="w-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-3 rounded-xl flex justify-center items-center gap-2 transition-colors mt-2"
+                                >
+                                    {appearance === 'dark' ? <><Sun className="w-5 h-5" /> Light Mode</> : <><Moon className="w-5 h-5" /> Dark Mode</>}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {showRules && (

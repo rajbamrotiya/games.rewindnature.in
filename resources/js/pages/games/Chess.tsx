@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, ArrowLeft, Maximize, Minimize, Menu } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { submitScore } from '@/lib/leaderboard';
-import FullscreenButton from '@/components/FullscreenButton';
+import { useFullscreen } from '@/hooks/use-fullscreen';
 import { Chess as ChessGame, Move, Square } from 'chess.js';
 
 interface GameStats {
@@ -27,6 +27,12 @@ export default function Chess() {
     const [gameOver, setGameOver] = useState<'w' | 'b' | 'draw' | null>(null);
     const [message, setMessage] = useState('Welcome! You play as White.');
     const [showRules, setShowRules] = useState(false);
+    const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
+    const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
+
+    useEffect(() => {
+        if (!isFullscreen) setShowFullscreenInfo(false);
+    }, [isFullscreen]);
 
     // Cookie helpers
     const getCookie = (name: string) => {
@@ -191,7 +197,9 @@ export default function Chess() {
                     <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
                 </div>
                 <div className="absolute top-4 right-4 z-50 flex gap-2">
-                    <FullscreenButton />
+                    <button onClick={toggleFullscreen} className="p-3 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:scale-110" aria-label="Toggle fullscreen">
+                        <Maximize className="w-5 h-5" />
+                    </button>
                     <button 
                         onClick={toggleTheme} 
                         className="p-3 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:rotate-12"
@@ -277,7 +285,12 @@ export default function Chess() {
                     >
                         <HelpCircle className="w-5 h-5" />
                     </button>
-                    <FullscreenButton />
+                    <button 
+                        onClick={toggleFullscreen} 
+                        className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:scale-110"
+                    >
+                        {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    </button>
                     <button 
                         onClick={toggleTheme} 
                         className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:rotate-12"
@@ -288,9 +301,29 @@ export default function Chess() {
                 </div>
             </header>
 
-            <div className="relative z-10 w-full max-w-4xl grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12">
-                <div className="w-full max-w-[550px] mx-auto bg-neutral-200 dark:bg-neutral-800 rounded-lg p-2 shadow-xl border border-neutral-300 dark:border-neutral-700">
-                    <div className="grid grid-cols-8 grid-rows-8 border-4 border-[#3e512c] dark:border-[#a0cc77] aspect-square">
+            <div ref={elementRef} className={`relative z-10 w-full transition-all ${isFullscreen ? 'flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0b0f19] h-screen max-w-full p-4' : 'max-w-4xl grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12'}`}>
+                
+                {isFullscreen && (
+                    <>
+                        <button 
+                            onClick={() => setShowFullscreenInfo(true)}
+                            className="absolute top-4 left-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Menu"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <button 
+                            onClick={toggleFullscreen}
+                            className="absolute top-4 right-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Exit Fullscreen"
+                        >
+                            <Minimize className="w-6 h-6" />
+                        </button>
+                    </>
+                )}
+
+                <div className={`w-full mx-auto bg-neutral-200 dark:bg-neutral-800 rounded-lg p-2 shadow-xl border border-neutral-300 dark:border-neutral-700 ${isFullscreen ? 'max-w-[min(90vw,90vh)] aspect-square flex flex-col justify-center' : 'max-w-[550px]'}`}>
+                    <div className="w-full h-full grid grid-cols-8 grid-rows-8 border-4 border-[#3e512c] dark:border-[#a0cc77] aspect-square">
                         {board.map((row, rIndex) => (
                             row.map((cell, cIndex) => {
                                 const isDark = (rIndex + cIndex) % 2 === 1;
@@ -351,27 +384,69 @@ export default function Chess() {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-6">
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
-                        <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
-                        <div className={`p-4 rounded-xl mb-4 shadow-inner ${
-                            game.turn() === 'w'
-                                ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
-                                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
-                        }`}>
-                            <p className="font-medium text-lg text-center">{message}</p>
+                {!isFullscreen && (
+                    <div className="flex flex-col gap-6">
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
+                            <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
+                            <div className={`p-4 rounded-xl mb-4 shadow-inner ${
+                                game.turn() === 'w'
+                                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
+                                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
+                            }`}>
+                                <p className="font-medium text-lg text-center">{message}</p>
+                            </div>
+                            
+                            {gameOver && (
+                                <button 
+                                    onClick={resetGame}
+                                    className="w-full py-3 bg-[#3e512c] text-white font-semibold rounded-xl hover:bg-[#2d3b20] dark:bg-[#4a6036] dark:hover:bg-[#5d7a42] transition-colors shadow-md"
+                                >
+                                    Play Again
+                                </button>
+                            )}
                         </div>
-                        
-                        {gameOver && (
-                            <button 
-                                onClick={resetGame}
-                                className="w-full py-3 bg-[#3e512c] text-white font-semibold rounded-xl hover:bg-[#2d3b20] dark:bg-[#4a6036] dark:hover:bg-[#5d7a42] transition-colors shadow-md"
-                            >
-                                Play Again
-                            </button>
-                        )}
                     </div>
-                </div>
+                )}
+
+                {isFullscreen && showFullscreenInfo && (
+                    <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm relative shadow-2xl border border-slate-200 dark:border-slate-700">
+                            <button onClick={() => setShowFullscreenInfo(false)} className="absolute top-4 right-4 p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                            <h2 className="text-2xl font-black mb-6 text-center text-slate-800 dark:text-white">Game Menu</h2>
+                            <div className="space-y-4">
+                                <div className={`p-4 rounded-xl mb-4 shadow-inner text-center font-medium ${
+                                    game.turn() === 'w'
+                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
+                                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
+                                }`}>
+                                    {message}
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Wins</span>
+                                    <span className="font-black text-2xl text-emerald-500">{stats.wins}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Losses</span>
+                                    <span className="font-black text-2xl text-rose-500">{stats.losses}</span>
+                                </div>
+                                <button 
+                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    className="w-full bg-[#3e512c] hover:bg-[#2d3b20] text-white font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
+                                >
+                                    <RotateCcw className="w-5 h-5" /> Restart Game
+                                </button>
+                                <button 
+                                    onClick={() => { toggleTheme(); }}
+                                    className="w-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-3 rounded-xl flex justify-center items-center gap-2 transition-colors mt-2"
+                                >
+                                    {appearance === 'dark' ? <><Sun className="w-5 h-5" /> Light Mode</> : <><Moon className="w-5 h-5" /> Dark Mode</>}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {showRules && (

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X, RotateCcw } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, RotateCcw, Maximize, Minimize, Menu } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { submitScore } from '@/lib/leaderboard';
-import FullscreenButton from '@/components/FullscreenButton';
+import { useFullscreen } from '@/hooks/use-fullscreen';
 
 interface Stats {
     name: string;
@@ -26,6 +26,12 @@ export default function FlappyBird() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [nameInput, setNameInput] = useState('');
     const [showRules, setShowRules] = useState(false);
+    const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
+    const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
+
+    useEffect(() => {
+        if (!isFullscreen) setShowFullscreenInfo(false);
+    }, [isFullscreen]);
 
     // Game state
     const [isPlaying, setIsPlaying] = useState(false);
@@ -230,7 +236,9 @@ export default function FlappyBird() {
                     <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
                 </div>
                 <div className="absolute top-4 right-4 z-50 flex gap-2">
-                    <FullscreenButton />
+                    <button onClick={toggleFullscreen} className="p-2.5 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:scale-110" aria-label="Toggle fullscreen">
+                        <Maximize className="w-5 h-5" />
+                    </button>
                     <button onClick={toggleTheme} className="p-2.5 rounded-full bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-all hover:rotate-12" aria-label="Toggle theme">
                         {appearance === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                     </button>
@@ -303,7 +311,12 @@ export default function FlappyBird() {
                     >
                         <HelpCircle className="w-5 h-5" />
                     </button>
-                    <FullscreenButton />
+                    <button 
+                        onClick={toggleFullscreen} 
+                        className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:scale-110"
+                    >
+                        {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    </button>
                     <button 
                         onClick={toggleTheme} 
                         className="p-2.5 rounded-full bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-all shadow-sm backdrop-blur-md hover:rotate-12"
@@ -313,16 +326,38 @@ export default function FlappyBird() {
                 </div>
             </header>
 
-            <main className="relative z-10 w-full max-w-4xl flex flex-col items-center flex-1">
-                <div className="mb-6 flex justify-between items-center w-full max-w-[800px]">
-                    <h2 className="text-2xl font-bold">Flappy Bird</h2>
-                    <div className="text-slate-500 dark:text-slate-400 font-medium">
-                        {message}
+            <main ref={elementRef} className={`relative z-10 w-full flex flex-col items-center transition-all ${isFullscreen ? 'justify-center bg-slate-50 dark:bg-[#0b0f19] h-screen max-w-full p-4' : 'max-w-4xl flex-1'}`}>
+                
+                {!isFullscreen && (
+                    <div className="mb-6 flex justify-between items-center w-full max-w-[800px]">
+                        <h2 className="text-2xl font-bold">Flappy Bird</h2>
+                        <div className="text-slate-500 dark:text-slate-400 font-medium">
+                            {message}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {isFullscreen && (
+                    <>
+                        <button 
+                            onClick={() => setShowFullscreenInfo(true)}
+                            className="absolute top-4 left-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Menu"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <button 
+                            onClick={toggleFullscreen}
+                            className="absolute top-4 right-4 p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-white backdrop-blur-md shadow-lg z-50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-all"
+                            aria-label="Exit Fullscreen"
+                        >
+                            <Minimize className="w-6 h-6" />
+                        </button>
+                    </>
+                )}
 
                 <div 
-                    className="relative w-full max-w-[800px] aspect-[4/3] bg-sky-200 dark:bg-sky-950 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-300 dark:border-white/20 cursor-pointer touch-none"
+                    className={`relative w-full aspect-[4/3] bg-sky-200 dark:bg-sky-950 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-300 dark:border-white/20 cursor-pointer touch-none ${isFullscreen ? 'max-w-[min(100vw,133vh)] max-h-[75vw]' : 'max-w-[800px]'}`}
                     onPointerDown={jump}
                 >
                     <canvas 
@@ -356,6 +391,42 @@ export default function FlappyBird() {
                         </div>
                     )}
                 </div>
+
+                {isFullscreen && showFullscreenInfo && (
+                    <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm relative shadow-2xl border border-slate-200 dark:border-slate-700">
+                            <button onClick={() => setShowFullscreenInfo(false)} className="absolute top-4 right-4 p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                            <h2 className="text-2xl font-black mb-6 text-center text-slate-800 dark:text-white">Game Menu</h2>
+                            <div className="space-y-4">
+                                <div className="text-center text-slate-500 dark:text-slate-400 font-medium mb-4">
+                                    {message}
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Score</span>
+                                    <span className="font-black text-2xl text-emerald-500">{score}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold">Best</span>
+                                    <span className="font-black text-2xl text-indigo-500">{Math.max(score, stats.highScore || 0)}</span>
+                                </div>
+                                <button 
+                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    className="w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 text-white font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
+                                >
+                                    <RotateCcw className="w-5 h-5" /> Play Again
+                                </button>
+                                <button 
+                                    onClick={() => { toggleTheme(); }}
+                                    className="w-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-3 rounded-xl flex justify-center items-center gap-2 transition-colors mt-2"
+                                >
+                                    {appearance === 'dark' ? <><Sun className="w-5 h-5" /> Light Mode</> : <><Moon className="w-5 h-5" /> Dark Mode</>}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Rules Modal */}
