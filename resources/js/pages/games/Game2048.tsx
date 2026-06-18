@@ -54,9 +54,21 @@ export default function Game2048() {
     const { appearance, updateAppearance } = useAppearance();
     const toggleTheme = () => updateAppearance(appearance === 'dark' ? 'light' : 'dark');
 
-    const [board, setBoard] = useState<Board>(() => addRandomTile(addRandomTile(getEmptyBoard())));
-    const [score, setScore] = useState(0);
-    const [gameOver, setGameOver] = useState(false);
+    const [board, setBoard] = useState<Board>(() => {
+        const saved = localStorage.getItem('2048_board');
+        if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+        }
+        return addRandomTile(addRandomTile(getEmptyBoard()));
+    });
+    const [score, setScore] = useState(() => {
+        const saved = localStorage.getItem('2048_score');
+        return saved ? parseInt(saved, 10) : 0;
+    });
+    const [gameOver, setGameOver] = useState(() => {
+        const saved = localStorage.getItem('2048_gameover');
+        return saved === 'true';
+    });
     const [stats, setStats] = useState<Stats | null>(null);
     const [nameInput, setNameInput] = useState('');
     const [showRules, setShowRules] = useState(false);
@@ -84,10 +96,21 @@ export default function Game2048() {
     };
 
     const resetGame = () => {
-        setBoard(addRandomTile(addRandomTile(getEmptyBoard())));
+        const newBoard = addRandomTile(addRandomTile(getEmptyBoard()));
+        setBoard(newBoard);
         setScore(0);
         setGameOver(false);
+        localStorage.setItem('2048_board', JSON.stringify(newBoard));
+        localStorage.setItem('2048_score', '0');
+        localStorage.setItem('2048_gameover', 'false');
     };
+
+    // Save game state whenever it changes
+    useEffect(() => {
+        localStorage.setItem('2048_board', JSON.stringify(board));
+        localStorage.setItem('2048_score', score.toString());
+        localStorage.setItem('2048_gameover', gameOver.toString());
+    }, [board, score, gameOver]);
 
     const updateStats = useCallback((finalScore: number) => {
         if (!stats) return;
