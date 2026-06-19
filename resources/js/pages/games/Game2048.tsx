@@ -70,6 +70,7 @@ export default function Game2048() {
         return saved === 'true';
     });
     const [stats, setStats] = useState<Stats | null>(null);
+    const [mergedCells, setMergedCells] = useState<string[]>([]);
     const [nameInput, setNameInput] = useState('');
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
@@ -137,6 +138,7 @@ export default function Game2048() {
             let newBoard = prevBoard.map(row => [...row]);
             let newScore = score;
             let moved = false;
+            let mergedPositions: {r: number, c: number}[] = [];
 
             const rotateRight = (matrix: Board) => {
                 const result = getEmptyBoard();
@@ -160,6 +162,7 @@ export default function Game2048() {
 
             const moveLeft = (matrix: Board) => {
                 const result = getEmptyBoard();
+                (result as any).merges = [];
                 for (let r = 0; r < 4; r++) {
                     let col = 0;
                     for (let c = 0; c < 4; c++) {
@@ -168,11 +171,13 @@ export default function Game2048() {
                             col++;
                         }
                     }
+                    const mergedIndices = new Set<number>();
                     for (let c = 0; c < 3; c++) {
                         if (result[r][c] !== 0 && result[r][c] === result[r][c + 1]) {
                             result[r][c] *= 2;
                             newScore += result[r][c];
                             result[r][c + 1] = 0;
+                            mergedIndices.add(c);
                         }
                     }
                     col = 0;
@@ -180,6 +185,9 @@ export default function Game2048() {
                     for (let c = 0; c < 4; c++) {
                         if (result[r][c] !== 0) {
                             finalRow[col] = result[r][c];
+                            if (mergedIndices.has(c)) {
+                                (result as any).merges.push({r, c: col});
+                            }
                             col++;
                         }
                     }
@@ -190,17 +198,21 @@ export default function Game2048() {
 
             if (direction === 'LEFT') {
                 newBoard = moveLeft(newBoard);
+                mergedPositions = (newBoard as any).merges;
             } else if (direction === 'RIGHT') {
                 newBoard = rotateRight(rotateRight(newBoard));
                 newBoard = moveLeft(newBoard);
+                mergedPositions = (newBoard as any).merges.map((m: any) => ({ r: 3 - m.r, c: 3 - m.c }));
                 newBoard = rotateLeft(rotateLeft(newBoard));
             } else if (direction === 'UP') {
                 newBoard = rotateLeft(newBoard);
                 newBoard = moveLeft(newBoard);
+                mergedPositions = (newBoard as any).merges.map((m: any) => ({ r: m.c, c: 3 - m.r }));
                 newBoard = rotateRight(newBoard);
             } else if (direction === 'DOWN') {
                 newBoard = rotateRight(newBoard);
                 newBoard = moveLeft(newBoard);
+                mergedPositions = (newBoard as any).merges.map((m: any) => ({ r: 3 - m.c, c: m.r }));
                 newBoard = rotateLeft(newBoard);
             }
 
@@ -208,6 +220,9 @@ export default function Game2048() {
                 moved = true;
                 newBoard = addRandomTile(newBoard);
                 setScore(newScore);
+
+                setMergedCells(mergedPositions.map(m => `${m.r}-${m.c}`));
+                setTimeout(() => setMergedCells([]), 200);
             }
 
             if (moved && checkGameOver(newBoard)) {
@@ -415,7 +430,7 @@ export default function Game2048() {
                             row.map((cell, c) => (
                                 <div 
                                     key={`${r}-${c}`} 
-                                    className={`rounded-xl flex justify-center items-center text-2xl sm:text-3xl transition-all duration-150 aspect-square ${getTileColor(cell)}`}
+                                    className={`rounded-xl flex justify-center items-center text-2xl sm:text-3xl transition-all duration-150 aspect-square ${getTileColor(cell)} ${mergedCells.includes(`${r}-${c}`) ? 'animate-pop' : ''}`}
                                 >
                                     {cell !== 0 ? cell : ''}
                                 </div>
