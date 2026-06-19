@@ -41,13 +41,22 @@ export default function Chess() {
         const saved = localStorage.getItem('chess_lastMove');
         return saved ? JSON.parse(saved) : null;
     });
+    const [showSetup, setShowSetup] = useState(() => {
+        return localStorage.getItem('chess_showSetup') === 'true';
+    });
+    const [playerColor, setPlayerColor] = useState<'w' | 'b'>(() => {
+        return (localStorage.getItem('chess_playerColor') as 'w' | 'b') || 'w';
+    });
+    const [setupColor, setSetupColor] = useState<'w' | 'b'>('w');
 
     useEffect(() => {
         localStorage.setItem('chess_fen', game.fen());
         localStorage.setItem('chess_gameOver', gameOver || '');
         localStorage.setItem('chess_message', message);
         localStorage.setItem('chess_lastMove', JSON.stringify(lastMove));
-    }, [board, gameOver, message, game, lastMove]);
+        localStorage.setItem('chess_showSetup', String(showSetup));
+        localStorage.setItem('chess_playerColor', playerColor);
+    }, [board, gameOver, message, game, lastMove, showSetup, playerColor]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -81,6 +90,9 @@ export default function Chess() {
         const newStats = { name: nameInput.trim(), wins: 0, losses: 0 };
         setStats(newStats);
         setCookie('chess_stats', JSON.stringify(newStats), 365);
+        if (!localStorage.getItem('chess_fen')) {
+            setShowSetup(true);
+        }
     };
 
     const updateStats = (winner: 'w' | 'b' | 'draw') => {
@@ -113,9 +125,10 @@ export default function Chess() {
             setBoard(game.board());
             
             if (game.isCheckmate()) {
-                setGameOver('b');
-                setMessage('Checkmate! Black wins.');
-                updateStats('b');
+                const winner = game.turn() === 'w' ? 'b' : 'w';
+                setGameOver(winner);
+                setMessage(`Checkmate! ${winner === 'w' ? 'White' : 'Black'} wins.`);
+                updateStats(winner);
             } else if (game.isDraw() || game.isStalemate() || game.isThreefoldRepetition()) {
                 setGameOver('draw');
                 setMessage('Game Over - Draw');
@@ -123,17 +136,17 @@ export default function Chess() {
             } else if (game.isCheck()) {
                 setMessage('Check!');
             } else {
-                setMessage('Your turn (White)');
+                setMessage(`Your turn (${playerColor === 'w' ? 'White' : 'Black'})`);
             }
         }, 500);
-    }, [game]);
+    }, [game, playerColor]);
 
     const handleSquareClick = (square: Square) => {
-        if (gameOver || game.turn() === 'b') return;
+        if (gameOver || game.turn() !== playerColor) return;
 
         // If clicking on one of our own pieces, select it
         const piece = game.get(square);
-        if (piece && piece.color === 'w') {
+        if (piece && piece.color === playerColor) {
             setSelectedSquare(square);
             setPossibleMoves(game.moves({ square, verbose: true }));
             setMessage("Piece selected.");
@@ -158,15 +171,16 @@ export default function Chess() {
                     setPossibleMoves([]);
                     
                     if (game.isCheckmate()) {
-                        setGameOver('w');
-                        setMessage('Checkmate! You win.');
-                        updateStats('w');
+                        const winner = game.turn() === 'w' ? 'b' : 'w';
+                        setGameOver(winner);
+                        setMessage(`Checkmate! ${winner === 'w' ? 'White' : 'Black'} wins.`);
+                        updateStats(winner);
                     } else if (game.isDraw() || game.isStalemate() || game.isThreefoldRepetition()) {
                         setGameOver('draw');
                         setMessage('Game Over - Draw');
                         updateStats('draw');
                     } else {
-                        setMessage("Black's turn...");
+                        setMessage(`${playerColor === 'w' ? 'Black' : 'White'}'s turn...`);
                         makeAIMove();
                     }
                 } catch (e) {
@@ -175,24 +189,45 @@ export default function Chess() {
             } else {
                 setSelectedSquare(null);
                 setPossibleMoves([]);
-                setMessage("Move cancelled.");
             }
         }
     };
 
     const resetGame = () => {
+        setShowSetup(true);
+    };
+
+    const startGame = (color: 'w' | 'b') => {
         const newGame = new ChessGame();
         setGame(newGame);
         setBoard(newGame.board());
+        setPlayerColor(color);
         setSelectedSquare(null);
         setPossibleMoves([]);
         setGameOver(null);
         setLastMove(null);
-        setMessage('Welcome! You play as White.');
-        localStorage.removeItem('chess_fen');
-        localStorage.removeItem('chess_gameOver');
-        localStorage.removeItem('chess_message');
-        localStorage.removeItem('chess_lastMove');
+        setMessage(color === 'w' ? 'Welcome! You play as White.' : "AI is playing as White and making the first move...");
+        setShowSetup(false);
+        
+        localStorage.setItem('chess_fen', newGame.fen());
+        localStorage.setItem('chess_gameOver', '');
+        localStorage.setItem('chess_message', color === 'w' ? 'Welcome! You play as White.' : "AI is playing as White...");
+        localStorage.setItem('chess_lastMove', 'null');
+        localStorage.setItem('chess_showSetup', 'false');
+        localStorage.setItem('chess_playerColor', color);
+
+        if (color === 'b') {
+            setTimeout(() => {
+                const moves = newGame.moves({ verbose: true });
+                if (moves.length > 0) {
+                    const move = moves[Math.floor(Math.random() * moves.length)];
+                    newGame.move(move);
+                    setLastMove({ from: move.from, to: move.to });
+                    setBoard(newGame.board());
+                    setMessage('Your turn (Black)');
+                }
+            }, 500);
+        }
     };
 
     const getPieceSymbol = (piece: { type: string, color: string } | null) => {
@@ -209,17 +244,6 @@ export default function Chess() {
             <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-300 overflow-hidden relative">
                 <Head>
                     <title>Chess - Rewind Nature Games</title>
-                    <meta name="description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                    <meta property="og:type" content="website" />
-                    <meta property="og:url" content="https://games.rewindnature.in/games/chess" />
-                    <meta property="og:title" content="Chess - Rewind Nature Games" />
-                    <meta property="og:description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                    <meta property="og:image" content="https://games.rewindnature.in/logo.png" />
-                    <meta property="twitter:card" content="summary_large_image" />
-                    <meta property="twitter:url" content="https://games.rewindnature.in/games/chess" />
-                    <meta property="twitter:title" content="Chess - Rewind Nature Games" />
-                    <meta property="twitter:description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                    <meta property="twitter:image" content="https://games.rewindnature.in/logo.png" />
                 </Head>
                 <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                     <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 rounded-full blur-[150px] mix-blend-screen animate-pulse duration-1000"></div>
@@ -267,20 +291,8 @@ export default function Chess() {
         <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col items-center py-6 px-4 font-sans transition-colors duration-300 relative overflow-hidden selection:bg-indigo-500 selection:text-white">
             <Head>
                 <title>Chess - Rewind Nature Games</title>
-                <meta name="description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://games.rewindnature.in/games/chess" />
-                <meta property="og:title" content="Chess - Rewind Nature Games" />
-                <meta property="og:description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                <meta property="og:image" content="https://games.rewindnature.in/logo.png" />
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:url" content="https://games.rewindnature.in/games/chess" />
-                <meta property="twitter:title" content="Chess - Rewind Nature Games" />
-                <meta property="twitter:description" content="Play Chess online. Challenge yourself with a modern single-player chess experience." />
-                <meta property="twitter:image" content="https://games.rewindnature.in/logo.png" />
             </Head>
             
-            {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 rounded-full blur-[150px] mix-blend-screen animate-pulse duration-1000"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-fuchsia-500/10 dark:bg-fuchsia-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-[3000ms] delay-700"></div>
@@ -352,12 +364,12 @@ export default function Chess() {
                 )}
 
                 <div className={`w-full mx-auto bg-neutral-200 dark:bg-neutral-800 rounded-lg p-2 shadow-xl border border-neutral-300 dark:border-neutral-700 ${isFullscreen ? 'max-w-[min(90vw,90vh)] aspect-square flex flex-col justify-center' : 'max-w-[550px]'}`}>
-                    <div className="w-full h-full grid grid-cols-8 grid-rows-8 border-4 border-[#3e512c] dark:border-[#a0cc77] aspect-square">
-                        {board.map((row, rIndex) => (
-                            row.map((cell, cIndex) => {
-                                const isDark = (rIndex + cIndex) % 2 === 1;
-                                
-                                // chess.js coordinates: a8 is [0][0], h1 is [7][7]
+                    <div className="w-full h-full grid grid-cols-8 grid-rows-8 border-4 border-[#5d3b24] dark:border-[#3a2212] aspect-square">
+                        {(playerColor === 'b' ? board.slice().reverse().map(row => row.slice().reverse()) : board).map((row, visualRIndex) => {
+                            const rIndex = playerColor === 'b' ? 7 - visualRIndex : visualRIndex;
+                            return row.map((cell, visualCIndex) => {
+                                const cIndex = playerColor === 'b' ? 7 - visualCIndex : visualCIndex;
+                                const isDark = (visualRIndex + visualCIndex) % 2 === 1;
                                 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
                                 const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
                                 const square = (files[cIndex] + ranks[rIndex]) as Square;
@@ -415,7 +427,7 @@ export default function Chess() {
                                     </div>
                                 );
                             })
-                        ))}
+                        })}
                     </div>
                 </div>
 
@@ -424,7 +436,7 @@ export default function Chess() {
                         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
                             <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
                             <div className={`p-4 rounded-xl mb-4 shadow-inner ${
-                                game.turn() === 'w'
+                                game.turn() === playerColor
                                     ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
                                     : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
                             }`}>
@@ -452,7 +464,7 @@ export default function Chess() {
                             <h2 className="text-2xl font-black mb-6 text-center text-slate-800 dark:text-white">Game Menu</h2>
                             <div className="space-y-4">
                                 <div className={`p-4 rounded-xl mb-4 shadow-inner text-center font-medium ${
-                                    game.turn() === 'w'
+                                    game.turn() === playerColor
                                         ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
                                         : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
                                 }`}>
@@ -467,7 +479,7 @@ export default function Chess() {
                                     <span className="font-black text-2xl text-rose-500">{stats.losses}</span>
                                 </div>
                                 <button 
-                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    onClick={() => { setShowSetup(true); setShowFullscreenInfo(false); }}
                                     className="w-full bg-[#3e512c] hover:bg-[#2d3b20] text-white font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
                                 >
                                     <RotateCcw className="w-5 h-5" /> Restart Game
@@ -482,42 +494,78 @@ export default function Chess() {
                         </div>
                     </div>
                 )}
-            </div>
+            
+                {showSetup && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6 text-center">Game Setup</h2>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Choose your color</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setSetupColor('w')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'w' ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-white border border-neutral-300"></div> White
+                                        </button>
+                                        <button 
+                                            onClick={() => setSetupColor('b')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'b' ? 'bg-neutral-100 dark:bg-neutral-800 border-neutral-800 dark:border-neutral-500 text-neutral-900 dark:text-white' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-neutral-900 border border-neutral-700"></div> Black
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-neutral-500 mt-2 text-center">White always moves first in standard chess.</p>
+                                </div>
+                            </div>
 
-            {showRules && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Chess Rules</h2>
-                            <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
-                                <X className="w-6 h-6" />
+                            <button 
+                                onClick={() => startGame(setupColor)} 
+                                className="mt-8 w-full py-4 bg-[#3e512c] hover:bg-[#2d3b20] text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
+                            >
+                                Start Game
                             </button>
                         </div>
-                        <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">The Objective</h3>
-                            <p>The goal of chess is to checkmate your opponent's king. Checkmate happens when the king is in a position to be captured (in "check") and cannot escape from capture.</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Piece Movement</h3>
-                            <ul className="list-disc pl-5 space-y-2">
-                                <li><strong>King (♔/♚)</strong>: Moves exactly one square in any direction.</li>
-                                <li><strong>Queen (♕/♛)</strong>: Moves any number of vacant squares in any direction (horizontally, vertically, or diagonally).</li>
-                                <li><strong>Rook (♖/♜)</strong>: Moves any number of vacant squares vertically or horizontally.</li>
-                                <li><strong>Bishop (♗/♝)</strong>: Moves any number of vacant squares diagonally.</li>
-                                <li><strong>Knight (♘/♞)</strong>: Moves in an 'L' shape: two squares vertically and one horizontally, or two horizontally and one vertically. Knights can jump over other pieces.</li>
-                                <li><strong>Pawn (♙/♟)</strong>: Moves forward one square, but captures diagonally forward. On its first move, it can move forward two squares.</li>
-                            </ul>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Special Rules</h3>
-                            <p><strong>Castling</strong>: A move involving the king and rook that helps protect the king.</p>
-                            <p><strong>En Passant</strong>: A special pawn capture that can occur immediately after a pawn makes a two-square advance.</p>
-                            <p><strong>Promotion</strong>: When a pawn reaches the opposite end of the board, it is promoted to any other piece (usually a Queen). In this game, pawns automatically promote to Queens.</p>
-                        </div>
-                        <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
-                            Got it!
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+
+                {showRules && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Chess Rules</h2>
+                                <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">The Objective</h3>
+                                <p>The goal of chess is to checkmate your opponent's king. Checkmate happens when the king is in a position to be captured (in "check") and cannot escape from capture.</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Piece Movement</h3>
+                                <ul className="list-disc pl-5 space-y-2">
+                                    <li><strong>King (♔/♚)</strong>: Moves exactly one square in any direction.</li>
+                                    <li><strong>Queen (♕/♛)</strong>: Moves any number of vacant squares in any direction (horizontally, vertically, or diagonally).</li>
+                                    <li><strong>Rook (♖/♜)</strong>: Moves any number of vacant squares vertically or horizontally.</li>
+                                    <li><strong>Bishop (♗/♝)</strong>: Moves any number of vacant squares diagonally.</li>
+                                    <li><strong>Knight (♘/♞)</strong>: Moves in an 'L' shape: two squares vertically and one horizontally, or two horizontally and one vertically. Knights can jump over other pieces.</li>
+                                    <li><strong>Pawn (♙/♟)</strong>: Moves forward one square, but captures diagonally forward. On its first move, it can move forward two squares.</li>
+                                </ul>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Special Rules</h3>
+                                <p><strong>Castling</strong>: A move involving the king and rook that helps protect the king.</p>
+                                <p><strong>En Passant</strong>: A special pawn capture that can occur immediately after a pawn makes a two-square advance.</p>
+                                <p><strong>Promotion</strong>: When a pawn reaches the opposite end of the board, it is promoted to any other piece (usually a Queen). In this game, pawns automatically promote to Queens.</p>
+                            </div>
+                            <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
+                                Got it!
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

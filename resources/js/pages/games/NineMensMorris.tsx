@@ -82,6 +82,14 @@ export default function NineMensMorris() {
         const saved = localStorage.getItem('nmm_lastMove');
         return saved ? JSON.parse(saved) : null;
     });
+    const [showSetup, setShowSetup] = useState(() => {
+        return localStorage.getItem('nmm_showSetup') === 'true';
+    });
+    const [playerColor, setPlayerColor] = useState<'rose' | 'green'>(() => {
+        return (localStorage.getItem('nmm_playerColor') as 'rose' | 'green') || 'rose';
+    });
+    const [setupFirstTurn, setSetupFirstTurn] = useState<'PLAYER' | 'AI'>('PLAYER');
+    const [setupColor, setSetupColor] = useState<'rose' | 'green'>('rose');
 
     useEffect(() => {
         localStorage.setItem('nmm_board', JSON.stringify(board));
@@ -92,7 +100,9 @@ export default function NineMensMorris() {
         localStorage.setItem('nmm_gameOver', gameOver || '');
         localStorage.setItem('nmm_message', message);
         localStorage.setItem('nmm_lastMove', JSON.stringify(lastMove));
-    }, [board, turn, phase, unplacedTokens, isRemoving, gameOver, message, lastMove]);
+        localStorage.setItem('nmm_showSetup', String(showSetup));
+        localStorage.setItem('nmm_playerColor', playerColor);
+    }, [board, turn, phase, unplacedTokens, isRemoving, gameOver, message, lastMove, showSetup, playerColor]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -135,6 +145,9 @@ export default function NineMensMorris() {
         const newStats = { name: nameInput.trim(), wins: 0, losses: 0 };
         setStats(newStats);
         setCookie('nmm_stats', JSON.stringify(newStats), 365);
+        if (!localStorage.getItem('nmm_board')) {
+            setShowSetup(true);
+        }
     };
 
     const updateStats = (winner: 'PLAYER' | 'AI') => {
@@ -379,23 +392,38 @@ export default function NineMensMorris() {
     };
 
     const resetGame = () => {
-        setBoard(Array(24).fill(null));
-        setTurn('PLAYER');
+        setShowSetup(true);
+    };
+
+    const startGame = (firstTurn: 'PLAYER' | 'AI', color: 'rose' | 'green') => {
+        const newBoard = Array(24).fill(null);
+        const newUnplaced = { PLAYER: 9, AI: 9 };
+        setBoard(newBoard);
+        setTurn(firstTurn);
+        setPlayerColor(color);
         setPhase('PLACEMENT');
-        setUnplacedTokens({ PLAYER: 9, AI: 9 });
+        setUnplacedTokens(newUnplaced);
         setSelectedToken(null);
         setIsRemoving(false);
         setGameOver(null);
         setLastMove(null);
-        setMessage('Welcome! You go first.');
-        localStorage.removeItem('nmm_board');
-        localStorage.removeItem('nmm_turn');
-        localStorage.removeItem('nmm_phase');
-        localStorage.removeItem('nmm_unplacedTokens');
-        localStorage.removeItem('nmm_isRemoving');
-        localStorage.removeItem('nmm_gameOver');
-        localStorage.removeItem('nmm_message');
-        localStorage.removeItem('nmm_lastMove');
+        setMessage(firstTurn === 'PLAYER' ? 'Welcome! You go first.' : "AI is making the first move...");
+        setShowSetup(false);
+        
+        localStorage.setItem('nmm_board', JSON.stringify(newBoard));
+        localStorage.setItem('nmm_turn', firstTurn);
+        localStorage.setItem('nmm_phase', 'PLACEMENT');
+        localStorage.setItem('nmm_unplacedTokens', JSON.stringify(newUnplaced));
+        localStorage.setItem('nmm_isRemoving', 'false');
+        localStorage.setItem('nmm_gameOver', '');
+        localStorage.setItem('nmm_message', firstTurn === 'PLAYER' ? 'Welcome! You go first.' : "AI is making the first move...");
+        localStorage.setItem('nmm_lastMove', 'null');
+        localStorage.setItem('nmm_showSetup', 'false');
+        localStorage.setItem('nmm_playerColor', color);
+
+        if (firstTurn === 'AI') {
+            aiMakeMove(newBoard, 'PLACEMENT', newUnplaced);
+        }
     };
 
     if (!stats) {
@@ -567,8 +595,8 @@ export default function NineMensMorris() {
                                     ${player === null 
                                         ? 'bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-600 border-2 border-neutral-300 dark:border-neutral-700 cursor-pointer hover:scale-125 shadow-sm' 
                                         : player === 'PLAYER' 
-                                            ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)] dark:shadow-[0_0_15px_rgba(244,63,94,0.6)] border-2 border-rose-200 dark:border-rose-400' 
-                                            : 'bg-[#3e512c] dark:bg-[#5d7a42] shadow-[0_0_15px_rgba(62,81,44,0.4)] dark:shadow-[0_0_15px_rgba(93,122,66,0.6)] border-2 border-[#a0cc77]'
+                                            ? (playerColor === 'rose' ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)] dark:shadow-[0_0_15px_rgba(244,63,94,0.6)] border-2 border-rose-200 dark:border-rose-400' : 'bg-[#3e512c] dark:bg-[#5d7a42] shadow-[0_0_15px_rgba(62,81,44,0.4)] dark:shadow-[0_0_15px_rgba(93,122,66,0.6)] border-2 border-[#a0cc77]')
+                                            : (playerColor === 'rose' ? 'bg-[#3e512c] dark:bg-[#5d7a42] shadow-[0_0_15px_rgba(62,81,44,0.4)] dark:shadow-[0_0_15px_rgba(93,122,66,0.6)] border-2 border-[#a0cc77]' : 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)] dark:shadow-[0_0_15px_rgba(244,63,94,0.6)] border-2 border-rose-200 dark:border-rose-400')
                                     }
                                     ${(lastMove?.from === index || lastMove?.to === index) ? 'ring-4 ring-cyan-400 dark:ring-cyan-500 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.6)]' : ''}
                                     ${selectedToken === index ? 'ring-4 ring-rose-300 dark:ring-white scale-125' : ''}
@@ -615,14 +643,14 @@ export default function NineMensMorris() {
                                 </div>
                                 <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-rose-500 shadow-sm"></div>
+                                        <div className={`w-3 h-3 rounded-full shadow-sm ${playerColor === 'rose' ? 'bg-rose-500' : 'bg-[#3e512c] dark:bg-[#5d7a42]'}`}></div>
                                         <span className="text-neutral-500 dark:text-neutral-400">Your Unplaced</span>
                                     </div>
                                     <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.PLAYER}</span>
                                 </div>
                                 <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-[#3e512c] dark:bg-[#5d7a42] shadow-sm"></div>
+                                        <div className={`w-3 h-3 rounded-full shadow-sm ${playerColor === 'rose' ? 'bg-[#3e512c] dark:bg-[#5d7a42]' : 'bg-rose-500'}`}></div>
                                         <span className="text-neutral-500 dark:text-neutral-400">AI Unplaced</span>
                                     </div>
                                     <span className="font-bold text-lg text-neutral-800 dark:text-neutral-200">{unplacedTokens.AI}</span>
@@ -662,7 +690,7 @@ export default function NineMensMorris() {
                                     <span className="font-black text-2xl text-rose-500">{stats.losses}</span>
                                 </div>
                                 <button 
-                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    onClick={() => { setShowSetup(true); setShowFullscreenInfo(false); }}
                                     className="w-full bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
                                 >
                                     <RotateCcw className="w-5 h-5" /> Restart Game
@@ -677,39 +705,92 @@ export default function NineMensMorris() {
                         </div>
                     </div>
                 )}
-            </div>
+            
+                {showSetup && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6 text-center">Game Setup</h2>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Who goes first?</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setSetupFirstTurn('PLAYER')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 transition-all ${setupFirstTurn === 'PLAYER' ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            You
+                                        </button>
+                                        <button 
+                                            onClick={() => setSetupFirstTurn('AI')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 transition-all ${setupFirstTurn === 'AI' ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            AI
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Choose your color</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setSetupColor('rose')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'rose' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-rose-500"></div> Rose
+                                        </button>
+                                        <button 
+                                            onClick={() => setSetupColor('green')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'green' ? 'bg-[#3e512c]/10 dark:bg-[#5d7a42]/10 border-[#3e512c] dark:border-[#5d7a42] text-[#3e512c] dark:text-[#a0cc77]' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-[#3e512c] dark:bg-[#5d7a42]"></div> Green
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
-            {showRules && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">9 kukri Rules</h2>
-                            <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
-                                <X className="w-6 h-6" />
+                            <button 
+                                onClick={() => startGame(setupFirstTurn, setupColor)} 
+                                className="mt-8 w-full py-4 bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
+                            >
+                                Start Game
                             </button>
                         </div>
-                        <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">1. The Placement Phase</h3>
-                            <p>The board starts empty. Players take turns placing one of their nine tokens on any empty intersection.</p>
-                            <p><strong>Forming a Mill:</strong> Whenever a player lines up three of their tokens in an unbroken horizontal or vertical line, it is called a "Mill".</p>
-                            <p><strong>Capturing:</strong> Every time you form a Mill, you immediately remove one of your opponent's tokens from the board. You can target any opponent token, except one that is already part of their own completed Mill (unless all of their tokens are currently in Mills).</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">2. The Movement Phase</h3>
-                            <p>Once all 18 tokens have been placed, players take turns sliding a single token along the connecting lines to an adjacent empty spot.</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">3. The "Flying" Phase</h3>
-                            <p>When a player is reduced to exactly three tokens, their pieces are no longer restricted to adjacent spaces. They can "fly" their tokens to any vacant point on the board.</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Win / Lose Conditions</h3>
-                            <p><strong>Victory:</strong> You win when your opponent is down to only 2 tokens (because it requires at least 3 tokens to make a Mill).</p>
-                            <p><strong>Loss:</strong> You lose if you have more pieces but cannot make any legal moves because your opponent has blocked all your paths.</p>
-                        </div>
-                        <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
-                            Got it!
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+
+                {showRules && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">9 kukri Rules</h2>
+                                <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">1. The Placement Phase</h3>
+                                <p>The board starts empty. Players take turns placing one of their nine tokens on any empty intersection.</p>
+                                <p><strong>Forming a Mill:</strong> Whenever a player lines up three of their tokens in an unbroken horizontal or vertical line, it is called a "Mill".</p>
+                                <p><strong>Capturing:</strong> Every time you form a Mill, you immediately remove one of your opponent's tokens from the board. You can target any opponent token, except one that is already part of their own completed Mill (unless all of their tokens are currently in Mills).</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">2. The Movement Phase</h3>
+                                <p>Once all 18 tokens have been placed, players take turns sliding a single token along the connecting lines to an adjacent empty spot.</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">3. The "Flying" Phase</h3>
+                                <p>When a player is reduced to exactly three tokens, their pieces are no longer restricted to adjacent spaces. They can "fly" their tokens to any vacant point on the board.</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Win / Lose Conditions</h3>
+                                <p><strong>Victory:</strong> You win when your opponent is down to only 2 tokens (because it requires at least 3 tokens to make a Mill).</p>
+                                <p><strong>Loss:</strong> You lose if you have more pieces but cannot make any legal moves because your opponent has blocked all your paths.</p>
+                            </div>
+                            <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
+                                Got it!
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

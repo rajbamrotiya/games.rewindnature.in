@@ -61,8 +61,16 @@ export default function Checkers() {
         return (localStorage.getItem('checkers_gameOver') as 'R' | 'B') || null;
     });
     const [message, setMessage] = useState(() => {
-        return localStorage.getItem('checkers_message') || 'Welcome! You go first (Red).';
+        return localStorage.getItem('checkers_message') || 'Welcome! You go first.';
     });
+    const [showSetup, setShowSetup] = useState(() => {
+        return localStorage.getItem('checkers_showSetup') === 'true';
+    });
+    const [playerColor, setPlayerColor] = useState<'red' | 'black'>(() => {
+        return (localStorage.getItem('checkers_playerColor') as 'red' | 'black') || 'red';
+    });
+    const [setupFirstTurn, setSetupFirstTurn] = useState<'PLAYER' | 'AI'>('PLAYER');
+    const [setupColor, setSetupColor] = useState<'red' | 'black'>('red');
     const [lastMove, setLastMove] = useState<{from: Position, to: Position} | null>(() => {
         const saved = localStorage.getItem('checkers_lastMove');
         return saved ? JSON.parse(saved) : null;
@@ -75,7 +83,9 @@ export default function Checkers() {
         localStorage.setItem('checkers_gameOver', gameOver || '');
         localStorage.setItem('checkers_message', message);
         localStorage.setItem('checkers_lastMove', JSON.stringify(lastMove));
-    }, [board, turn, mustJumpFrom, gameOver, message, lastMove]);
+        localStorage.setItem('checkers_showSetup', String(showSetup));
+        localStorage.setItem('checkers_playerColor', playerColor);
+    }, [board, turn, mustJumpFrom, gameOver, message, lastMove, showSetup, playerColor]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -109,6 +119,9 @@ export default function Checkers() {
         const newStats = { name: nameInput.trim(), wins: 0, losses: 0 };
         setStats(newStats);
         setCookie('checkers_stats', JSON.stringify(newStats), 365);
+        if (!localStorage.getItem('checkers_board')) {
+            setShowSetup(true);
+        }
     };
 
     const updateStats = (winner: 'R' | 'B') => {
@@ -345,20 +358,29 @@ export default function Checkers() {
     };
 
     const resetGame = () => {
-        setBoard(JSON.parse(JSON.stringify(INITIAL_BOARD)));
-        setTurn('R');
-        setSelectedPos(null);
+        setShowSetup(true);
+    };
+
+    const startGame = (firstTurn: 'PLAYER' | 'AI', color: 'red' | 'black') => {
+        const newBoard = JSON.parse(JSON.stringify(INITIAL_BOARD));
+        setBoard(newBoard);
+        setTurn(firstTurn === 'PLAYER' ? 'R' : 'B');
+        setPlayerColor(color);
         setValidMoves([]);
         setMustJumpFrom(null);
         setGameOver(null);
         setLastMove(null);
-        setMessage('Welcome! You go first (Red).');
-        localStorage.removeItem('checkers_board');
-        localStorage.removeItem('checkers_turn');
-        localStorage.removeItem('checkers_mustJumpFrom');
-        localStorage.removeItem('checkers_gameOver');
-        localStorage.removeItem('checkers_message');
-        localStorage.removeItem('checkers_lastMove');
+        setMessage(firstTurn === 'PLAYER' ? 'Welcome! You go first.' : "AI is making the first move...");
+        setShowSetup(false);
+        
+        localStorage.setItem('checkers_board', JSON.stringify(newBoard));
+        localStorage.setItem('checkers_turn', firstTurn === 'PLAYER' ? 'R' : 'B');
+        localStorage.setItem('checkers_mustJumpFrom', 'null');
+        localStorage.setItem('checkers_gameOver', '');
+        localStorage.setItem('checkers_message', firstTurn === 'PLAYER' ? 'Welcome! You go first.' : "AI is making the first move...");
+        localStorage.setItem('checkers_lastMove', 'null');
+        localStorage.setItem('checkers_showSetup', 'false');
+        localStorage.setItem('checkers_playerColor', color);
     };
 
     if (!stats) {
@@ -539,11 +561,11 @@ export default function Checkers() {
                                         
                                         {cell && (
                                             <div className={`w-[80%] h-[80%] rounded-full shadow-md border-[3px] flex items-center justify-center z-10 transition-transform
-                                                ${isPlayerPiece(cell, 'R') ? 'bg-rose-600 border-rose-800' : 'bg-neutral-800 border-neutral-950'}
+                                                ${((playerColor === 'red' && isPlayerPiece(cell, 'R')) || (playerColor === 'black' && isPlayerPiece(cell, 'B'))) ? 'bg-rose-600 border-rose-800' : 'bg-neutral-800 border-neutral-950'}
                                                 ${isSelected ? 'scale-110 ring-4 ring-white/50' : 'hover:scale-105'}
                                                 ${mustJumpFrom?.r === rIndex && mustJumpFrom?.c === cIndex ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
                                             `}>
-                                                <div className={`w-[70%] h-[70%] rounded-full border-2 opacity-50 ${isPlayerPiece(cell, 'R') ? 'border-rose-800' : 'border-neutral-950'}`}></div>
+                                                <div className={`w-[70%] h-[70%] rounded-full border-2 opacity-50 ${((playerColor === 'red' && isPlayerPiece(cell, 'R')) || (playerColor === 'black' && isPlayerPiece(cell, 'B'))) ? 'border-rose-800' : 'border-neutral-950'}`}></div>
                                                 {cell.includes('K') && (
                                                     <div className="absolute text-yellow-400 font-bold text-xl drop-shadow-md">♔</div>
                                                 )}
@@ -561,7 +583,7 @@ export default function Checkers() {
                         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
                             <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
                             <div className={`p-4 rounded-xl mb-4 shadow-inner ${
-                                turn === 'R' 
+                                ((playerColor === 'red' && turn === 'R') || (playerColor === 'black' && turn === 'B'))
                                     ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20' 
                                     : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700'
                             }`}>
@@ -604,7 +626,7 @@ export default function Checkers() {
                                     <span className="font-black text-2xl text-rose-500">{stats.losses}</span>
                                 </div>
                                 <button 
-                                    onClick={() => { resetGame(); setShowFullscreenInfo(false); }}
+                                    onClick={() => { setShowSetup(true); setShowFullscreenInfo(false); }}
                                     className="w-full bg-neutral-900 dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg mt-4"
                                 >
                                     <RotateCcw className="w-5 h-5" /> Restart Game
@@ -619,38 +641,91 @@ export default function Checkers() {
                         </div>
                     </div>
                 )}
-            </div>
+            
+                {showSetup && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6 text-center">Game Setup</h2>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Who goes first?</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setSetupFirstTurn('PLAYER')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 transition-all ${setupFirstTurn === 'PLAYER' ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            You
+                                        </button>
+                                        <button 
+                                            onClick={() => setSetupFirstTurn('AI')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 transition-all ${setupFirstTurn === 'AI' ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-700 dark:text-indigo-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            AI
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Choose your color</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setSetupColor('red')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'red' ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-400' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-rose-600"></div> Red
+                                        </button>
+                                        <button 
+                                            onClick={() => setSetupColor('black')}
+                                            className={`py-3 px-4 rounded-xl font-medium border-2 flex items-center justify-center gap-2 transition-all ${setupColor === 'black' ? 'bg-neutral-100 dark:bg-neutral-800 border-neutral-800 dark:border-neutral-500 text-neutral-900 dark:text-white' : 'border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'}`}
+                                        >
+                                            <div className="w-4 h-4 rounded-full bg-neutral-800"></div> Black
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
-            {showRules && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Checkers Rules</h2>
-                            <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
-                                <X className="w-6 h-6" />
+                            <button 
+                                onClick={() => startGame(setupFirstTurn, setupColor)} 
+                                className="mt-8 w-full py-4 bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
+                            >
+                                Start Game
                             </button>
                         </div>
-                        <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Basic Movement</h3>
-                            <p>Pieces only move diagonally forward on the dark squares. The player with the Red pieces (You) moves first.</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Capturing</h3>
-                            <p>You can capture an opponent's piece by jumping over it diagonally into an empty square immediately beyond it.</p>
-                            <p><strong>Mandatory Jumps:</strong> If a jump is possible, you <strong>must</strong> make that jump. If a jump leads to another possible jump with the same piece, you must continue jumping until no more jumps are possible (multi-jump).</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Kings</h3>
-                            <p>When a piece reaches the farthest row on the opponent's side of the board, it is crowned a "King".</p>
-                            <p>Kings can move and jump diagonally both forward and backward, making them very powerful.</p>
-
-                            <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Win Conditions</h3>
-                            <p>You win the game when your opponent has no pieces left on the board, or they cannot make any legal moves because all their remaining pieces are blocked.</p>
-                        </div>
-                        <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
-                            Got it!
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+
+                {showRules && (
+                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-neutral-200 dark:border-neutral-800 text-left">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Checkers Rules</h2>
+                                <button onClick={() => setShowRules(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed text-sm md:text-base">
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Basic Movement</h3>
+                                <p>Pieces only move diagonally forward on the dark squares. The player with the Red pieces (You) moves first.</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Capturing</h3>
+                                <p>You can capture an opponent's piece by jumping over it diagonally into an empty square immediately beyond it.</p>
+                                <p><strong>Mandatory Jumps:</strong> If a jump is possible, you <strong>must</strong> make that jump. If a jump leads to another possible jump with the same piece, you must continue jumping until no more jumps are possible (multi-jump).</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Kings</h3>
+                                <p>When a piece reaches the farthest row on the opponent's side of the board, it is crowned a "King".</p>
+                                <p>Kings can move and jump diagonally both forward and backward, making them very powerful.</p>
+
+                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Win Conditions</h3>
+                                <p>You win the game when your opponent has no pieces left on the board, or they cannot make any legal moves because all their remaining pieces are blocked.</p>
+                            </div>
+                            <button onClick={() => setShowRules(false)} className="mt-8 w-full py-3 bg-[#3e512c] text-white rounded-xl font-medium hover:bg-[#2d3b20] transition-colors">
+                                Got it!
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

@@ -1,0 +1,1 @@
+import{C as e}from"./app-CsShF0gm.js";var t=e(`Check`,[[`path`,{d:`M20 6 9 17l-5-5`,key:`1gmf2c`}]]);export{t};
