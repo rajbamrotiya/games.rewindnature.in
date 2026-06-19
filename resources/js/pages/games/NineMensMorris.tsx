@@ -170,7 +170,7 @@ export default function NineMensMorris() {
     const getPlayerState = (b: PlayerType[], unplaced: typeof unplacedTokens, p: 'PLAYER' | 'AI') => {
         const piecesOnBoard = countPieces(b, p);
         const piecesToPlace = unplaced[p];
-        const isFlying = piecesToPlace === 0 && piecesOnBoard === 3;
+        const isFlying = false; // Flying rule is disabled in 9 Kukri variant
         const canMove = isFlying || b.some((val, i) => {
             if (val !== p) return false;
             return ADJACENCY[i].some(adj => b[adj] === null);
@@ -776,9 +776,6 @@ export default function NineMensMorris() {
 
                                 <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">2. The Movement Phase</h3>
                                 <p>Once all 18 tokens have been placed, players take turns sliding a single token along the connecting lines to an adjacent empty spot.</p>
-
-                                <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">3. The "Flying" Phase</h3>
-                                <p>When a player is reduced to exactly three tokens, their pieces are no longer restricted to adjacent spaces. They can "fly" their tokens to any vacant point on the board.</p>
 
                                 <h3 className="font-semibold text-lg text-neutral-900 dark:text-white mt-4">Win / Lose Conditions</h3>
                                 <p><strong>Victory:</strong> You win when your opponent is down to only 2 tokens (because it requires at least 3 tokens to make a Mill).</p>
