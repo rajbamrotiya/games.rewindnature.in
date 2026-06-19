@@ -37,12 +37,17 @@ export default function Chess() {
     const [message, setMessage] = useState(() => {
         return localStorage.getItem('chess_message') || 'Welcome! You play as White.';
     });
+    const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(() => {
+        const saved = localStorage.getItem('chess_lastMove');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     useEffect(() => {
         localStorage.setItem('chess_fen', game.fen());
         localStorage.setItem('chess_gameOver', gameOver || '');
         localStorage.setItem('chess_message', message);
-    }, [board, gameOver, message, game]);
+        localStorage.setItem('chess_lastMove', JSON.stringify(lastMove));
+    }, [board, gameOver, message, game, lastMove]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -104,6 +109,7 @@ export default function Chess() {
             const move = moves[Math.floor(Math.random() * moves.length)];
             game.move(move);
             
+            setLastMove({ from: move.from, to: move.to });
             setBoard(game.board());
             
             if (game.isCheckmate()) {
@@ -146,6 +152,7 @@ export default function Chess() {
                         promotion: 'q' // Always promote to queen for simplicity
                     });
                     
+                    setLastMove({ from: selectedSquare, to: square });
                     setBoard(game.board());
                     setSelectedSquare(null);
                     setPossibleMoves([]);
@@ -180,10 +187,12 @@ export default function Chess() {
         setSelectedSquare(null);
         setPossibleMoves([]);
         setGameOver(null);
+        setLastMove(null);
         setMessage('Welcome! You play as White.');
         localStorage.removeItem('chess_fen');
         localStorage.removeItem('chess_gameOver');
         localStorage.removeItem('chess_message');
+        localStorage.removeItem('chess_lastMove');
     };
 
     const getPieceSymbol = (piece: { type: string, color: string } | null) => {
@@ -355,6 +364,7 @@ export default function Chess() {
                                 
                                 const isSelected = selectedSquare === square;
                                 const isPossibleMove = possibleMoves.some(m => m.to === square);
+                                const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
                                 
                                 return (
                                     <div 
@@ -365,6 +375,11 @@ export default function Chess() {
                                             ${isPossibleMove ? 'cursor-pointer' : ''}
                                         `}
                                     >
+                                        {/* Highlight last move */}
+                                        {isLastMove && (
+                                            <div className="absolute inset-0 bg-cyan-400/30 animate-pulse"></div>
+                                        )}
+                                        
                                         {/* Highlight possible move */}
                                         {isPossibleMove && (
                                             <div className="absolute inset-0 m-auto w-4 h-4 bg-black/20 rounded-full"></div>

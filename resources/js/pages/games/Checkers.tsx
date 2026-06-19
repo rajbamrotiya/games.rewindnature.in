@@ -63,6 +63,10 @@ export default function Checkers() {
     const [message, setMessage] = useState(() => {
         return localStorage.getItem('checkers_message') || 'Welcome! You go first (Red).';
     });
+    const [lastMove, setLastMove] = useState<{from: Position, to: Position} | null>(() => {
+        const saved = localStorage.getItem('checkers_lastMove');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     useEffect(() => {
         localStorage.setItem('checkers_board', JSON.stringify(board));
@@ -70,7 +74,8 @@ export default function Checkers() {
         localStorage.setItem('checkers_mustJumpFrom', JSON.stringify(mustJumpFrom));
         localStorage.setItem('checkers_gameOver', gameOver || '');
         localStorage.setItem('checkers_message', message);
-    }, [board, turn, mustJumpFrom, gameOver, message]);
+        localStorage.setItem('checkers_lastMove', JSON.stringify(lastMove));
+    }, [board, turn, mustJumpFrom, gameOver, message, lastMove]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -190,6 +195,7 @@ export default function Checkers() {
             let b = JSON.parse(JSON.stringify(currentBoard));
             let currentPos: Position | null = null;
             let moveMade = false;
+            let aiMoveInfo: {from: Position, to: Position} | null = null;
 
             // AI loop for multiple jumps
             while (true) {
@@ -204,6 +210,12 @@ export default function Checkers() {
                 const move = candidates[Math.floor(Math.random() * candidates.length)];
                 
                 // Apply move
+                if (!aiMoveInfo) {
+                    aiMoveInfo = { from: move.from, to: move.to };
+                } else {
+                    aiMoveInfo.to = move.to;
+                }
+                
                 b[move.to.r][move.to.c] = b[move.from.r][move.from.c];
                 b[move.from.r][move.from.c] = null;
                 if (move.jumped) {
@@ -230,6 +242,7 @@ export default function Checkers() {
 
             if (moveMade) {
                 setBoard(b);
+                if (aiMoveInfo) setLastMove(aiMoveInfo);
                 const winner = checkWinCondition(b);
                 if (winner) {
                     setGameOver(winner);
@@ -283,6 +296,13 @@ export default function Checkers() {
                     newBoard[move.jumped.r][move.jumped.c] = null;
                 }
 
+                setLastMove(prev => {
+                    if (mustJumpFrom && prev && prev.to.r === selectedPos.r && prev.to.c === selectedPos.c) {
+                        return { from: prev.from, to: {r, c} };
+                    }
+                    return { from: selectedPos, to: {r, c} };
+                });
+
                 // King promotion
                 let promoted = false;
                 if (r === 0 && newBoard[r][c] === 'R') {
@@ -331,12 +351,14 @@ export default function Checkers() {
         setValidMoves([]);
         setMustJumpFrom(null);
         setGameOver(null);
+        setLastMove(null);
         setMessage('Welcome! You go first (Red).');
         localStorage.removeItem('checkers_board');
         localStorage.removeItem('checkers_turn');
         localStorage.removeItem('checkers_mustJumpFrom');
         localStorage.removeItem('checkers_gameOver');
         localStorage.removeItem('checkers_message');
+        localStorage.removeItem('checkers_lastMove');
     };
 
     if (!stats) {
@@ -493,6 +515,10 @@ export default function Checkers() {
                                 const isDark = (rIndex + cIndex) % 2 === 1;
                                 const isSelected = selectedPos?.r === rIndex && selectedPos?.c === cIndex;
                                 const isValidMove = validMoves.some(m => m.to.r === rIndex && m.to.c === cIndex);
+                                const isLastMove = lastMove && (
+                                    (lastMove.from.r === rIndex && lastMove.from.c === cIndex) || 
+                                    (lastMove.to.r === rIndex && lastMove.to.c === cIndex)
+                                );
                                 
                                 return (
                                     <div 
@@ -504,6 +530,9 @@ export default function Checkers() {
                                             ${isDark && !isValidMove ? 'hover:bg-[#7a4b22] transition-colors' : ''}
                                         `}
                                     >
+                                        {isLastMove && (
+                                            <div className="absolute inset-0 bg-cyan-400/30 animate-pulse"></div>
+                                        )}
                                         {isValidMove && (
                                             <div className="absolute inset-0 bg-[#3e512c]/40 dark:bg-[#a0cc77]/30 animate-pulse"></div>
                                         )}

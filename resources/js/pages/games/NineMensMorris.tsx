@@ -78,6 +78,10 @@ export default function NineMensMorris() {
     const [message, setMessage] = useState(() => {
         return localStorage.getItem('nmm_message') || 'Welcome! You go first.';
     });
+    const [lastMove, setLastMove] = useState<{from: number | null, to: number} | null>(() => {
+        const saved = localStorage.getItem('nmm_lastMove');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     useEffect(() => {
         localStorage.setItem('nmm_board', JSON.stringify(board));
@@ -87,7 +91,8 @@ export default function NineMensMorris() {
         localStorage.setItem('nmm_isRemoving', String(isRemoving));
         localStorage.setItem('nmm_gameOver', gameOver || '');
         localStorage.setItem('nmm_message', message);
-    }, [board, turn, phase, unplacedTokens, isRemoving, gameOver, message]);
+        localStorage.setItem('nmm_lastMove', JSON.stringify(lastMove));
+    }, [board, turn, phase, unplacedTokens, isRemoving, gameOver, message, lastMove]);
     const [showRules, setShowRules] = useState(false);
     const { isFullscreen, toggleFullscreen, elementRef } = useFullscreen<HTMLDivElement>();
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(false);
@@ -196,6 +201,7 @@ export default function NineMensMorris() {
             let nextBoard = [...currentBoard];
             let nextUnplaced = { ...currentUnplaced };
             let aiWillRemove = false;
+            let aiMoveDetails: {from: number | null, to: number} | null = null;
 
             if (currentPhase === 'PLACEMENT') {
                 const emptySpots = currentBoard.map((val, i) => val === null ? i : -1).filter(i => i !== -1);
@@ -211,6 +217,7 @@ export default function NineMensMorris() {
                 nextBoard[target] = 'AI';
                 nextUnplaced.AI -= 1;
                 aiWillRemove = formsMill(currentBoard, target, 'AI');
+                aiMoveDetails = { from: null, to: target };
             } else {
                 const aiState = getPlayerState(currentBoard, currentUnplaced, 'AI');
                 const myPieces = currentBoard.map((val, i) => val === 'AI' ? i : -1).filter(i => i !== -1);
@@ -245,6 +252,7 @@ export default function NineMensMorris() {
                     let tempBoard = [...currentBoard];
                     tempBoard[move.from] = null;
                     aiWillRemove = formsMill(tempBoard, move.to, 'AI');
+                    aiMoveDetails = { from: move.from, to: move.to };
                 }
             }
 
@@ -261,6 +269,7 @@ export default function NineMensMorris() {
 
             setBoard(nextBoard);
             setUnplacedTokens(nextUnplaced);
+            if (aiMoveDetails) setLastMove(aiMoveDetails);
             
             const nextPhase = (nextUnplaced.PLAYER === 0 && nextUnplaced.AI === 0) ? 'MOVEMENT' : 'PLACEMENT';
             setPhase(nextPhase);
@@ -312,6 +321,7 @@ export default function NineMensMorris() {
             
             setBoard(newBoard);
             setUnplacedTokens(newUnplaced);
+            setLastMove({ from: null, to: index });
 
             if (formsMill(board, index, 'PLAYER')) {
                 setIsRemoving(true);
@@ -347,6 +357,7 @@ export default function NineMensMorris() {
                         newBoard[selectedToken] = null;
                         newBoard[index] = 'PLAYER';
                         setBoard(newBoard);
+                        setLastMove({ from: selectedToken, to: index });
                         setSelectedToken(null);
                         
                         let tempBoard = [...board];
@@ -375,6 +386,7 @@ export default function NineMensMorris() {
         setSelectedToken(null);
         setIsRemoving(false);
         setGameOver(null);
+        setLastMove(null);
         setMessage('Welcome! You go first.');
         localStorage.removeItem('nmm_board');
         localStorage.removeItem('nmm_turn');
@@ -383,6 +395,7 @@ export default function NineMensMorris() {
         localStorage.removeItem('nmm_isRemoving');
         localStorage.removeItem('nmm_gameOver');
         localStorage.removeItem('nmm_message');
+        localStorage.removeItem('nmm_lastMove');
     };
 
     if (!stats) {
@@ -557,6 +570,7 @@ export default function NineMensMorris() {
                                             ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)] dark:shadow-[0_0_15px_rgba(244,63,94,0.6)] border-2 border-rose-200 dark:border-rose-400' 
                                             : 'bg-[#3e512c] dark:bg-[#5d7a42] shadow-[0_0_15px_rgba(62,81,44,0.4)] dark:shadow-[0_0_15px_rgba(93,122,66,0.6)] border-2 border-[#a0cc77]'
                                     }
+                                    ${(lastMove?.from === index || lastMove?.to === index) ? 'ring-4 ring-cyan-400 dark:ring-cyan-500 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.6)]' : ''}
                                     ${selectedToken === index ? 'ring-4 ring-rose-300 dark:ring-white scale-125' : ''}
                                     ${isRemoving && player === 'AI' && canBeRemoved(board, index, 'AI') ? 'animate-pulse ring-4 ring-[#3e512c] dark:ring-[#a0cc77] cursor-pointer' : ''}
                                 `}
