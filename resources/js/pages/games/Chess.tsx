@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Moon, Sun, HelpCircle, X, ArrowLeft, Maximize, Minimize, Menu } from 'lucide-react';
+import { Moon, Sun, HelpCircle, X, ArrowLeft, Maximize, Minimize, Menu, RotateCcw } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { submitScore } from '@/lib/leaderboard';
 import { useFullscreen } from '@/hooks/use-fullscreen';
