@@ -356,7 +356,7 @@ export default function Chess() {
                     </>
                 )}
 
-                <div className={`w-full mx-auto bg-neutral-200 dark:bg-neutral-800 rounded-lg p-2 shadow-xl border border-neutral-300 dark:border-neutral-700 flex-shrink-0 ${isFullscreen ? 'max-w-[min(90vw,55vh)] lg:max-w-[min(65vw,85vh)] aspect-square flex flex-col justify-center' : 'max-w-[550px]'}`}>
+                <div className={`w-full mx-auto bg-neutral-200 dark:bg-neutral-800 rounded-lg p-2 shadow-xl border border-neutral-300 dark:border-neutral-700 flex-shrink-0 ${isFullscreen ? 'max-w-[min(95vw,65vh)] lg:max-w-[min(65vw,85vh)] aspect-square flex flex-col justify-center' : 'max-w-[550px]'}`}>
                     <div className="w-full h-full grid grid-cols-8 grid-rows-8 border-4 border-[#5d3b24] dark:border-[#3a2212] aspect-square">
                         {(playerColor === 'b' ? board.slice().reverse().map(row => row.slice().reverse()) : board).map((row, visualRIndex) => {
                             const rIndex = playerColor === 'b' ? 7 - visualRIndex : visualRIndex;
@@ -424,9 +424,9 @@ export default function Chess() {
                     </div>
                 </div>
 
-                <div className={`flex flex-col gap-4 lg:gap-6 w-full ${isFullscreen ? 'max-w-sm lg:max-w-xs' : ''}`}>
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
-                            <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Status</h2>
+                <div className={`w-full ${isFullscreen ? 'flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-3 lg:gap-6 snap-x snap-mandatory pb-4 lg:pb-0 lg:max-w-xs [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]' : 'flex flex-col gap-6'}`}>
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 lg:p-6 rounded-2xl shadow-lg transition-colors duration-300 min-w-[260px] lg:min-w-0 snap-center shrink-0">
+                            <h2 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-neutral-900 dark:text-white">Status</h2>
                             <div className={`p-4 rounded-xl mb-4 shadow-inner ${
                                 game.turn() === playerColor
                                     ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20' 
@@ -444,8 +444,8 @@ export default function Chess() {
                                 </button>
                             )}
                         </div>
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-lg transition-colors duration-300">
-                            <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-white">Vitals</h2>
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 lg:p-6 rounded-2xl shadow-lg transition-colors duration-300 min-w-[260px] lg:min-w-0 snap-center shrink-0">
+                            <h2 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-neutral-900 dark:text-white">Vitals</h2>
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                     <span className="text-neutral-500 dark:text-neutral-400">Wins</span>
@@ -459,7 +459,7 @@ export default function Chess() {
                         </div>
 
                         {isFullscreen && (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 min-w-[200px] lg:min-w-0 snap-center shrink-0 justify-center">
                                 <button 
                                     onClick={() => { setShowSetup(true); }}
                                     className="w-full bg-[#3e512c] hover:bg-[#2d3b20] text-white font-black py-4 rounded-xl flex justify-center items-center gap-2 transition-transform active:scale-95 shadow-lg"
