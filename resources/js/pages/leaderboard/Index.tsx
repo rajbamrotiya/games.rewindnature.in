@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Trophy, ArrowLeft, Gamepad2, Sun, Moon } from 'lucide-react';
+import { Trophy, ArrowLeft, Gamepad2, Sun, Moon, Calendar } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 
 interface LeaderboardRecord {
@@ -10,13 +10,13 @@ interface LeaderboardRecord {
     wins: number;
     losses: number;
     high_score: number;
-    created_at: string;
-    updated_at: string;
+    last_played_at: string;
 }
 
 interface Props {
     leaderboards: LeaderboardRecord[];
     currentGame: string | null;
+    currentPeriod: string;
 }
 
 const GAMES = [
@@ -28,9 +28,41 @@ const GAMES = [
     { id: '2048', name: '2048' },
 ];
 
-export default function Leaderboard({ leaderboards, currentGame }: Props) {
+const PERIODS = [
+    { id: 'daily', name: 'Today' },
+    { id: 'weekly', name: 'This Week' },
+    { id: 'monthly', name: 'This Month' },
+    { id: 'yearly', name: 'This Year' },
+    { id: 'all_time', name: 'All Time' },
+];
+
+export default function Leaderboard({ leaderboards, currentGame, currentPeriod }: Props) {
     const { appearance, updateAppearance } = useAppearance();
     
+    // Fallback if currentPeriod is not passed or empty
+    const activePeriod = currentPeriod || 'all_time';
+
+    const getUrl = (game: string | null, period: string) => {
+        const params = new URLSearchParams();
+        if (game) params.set('game', game);
+        if (period !== 'all_time') params.set('period', period);
+        const q = params.toString();
+        return `/leaderboard${q ? `?${q}` : ''}`;
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(date);
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] font-sans text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white pb-20 relative">
             <Head title="Leaderboard - Rewind Nature Games" />
@@ -62,7 +94,7 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
 
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 relative z-10">
 
-                <div className="text-center mb-16">
+                <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-xl mb-6">
                         <Trophy className="w-10 h-10" />
                     </div>
@@ -72,9 +104,31 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                     </p>
                 </div>
 
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-12">
+                    {/* Period Filter */}
+                    <div className="flex bg-white/50 dark:bg-black/20 backdrop-blur-md p-1 rounded-full border border-slate-200 dark:border-white/10 shadow-sm overflow-x-auto max-w-full hide-scrollbar">
+                        {PERIODS.map(period => (
+                            <Link 
+                                key={period.id}
+                                href={getUrl(currentGame, period.id)}
+                                preserveScroll
+                                className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
+                                    activePeriod === period.id 
+                                    ? 'bg-amber-500 text-white shadow-md' 
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                {period.name}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="flex flex-wrap gap-3 justify-center mb-12">
                     <Link 
-                        href="/leaderboard" 
+                        href={getUrl(null, activePeriod)}
+                        preserveScroll
                         className={`px-6 py-3 rounded-full font-bold transition-all ${
                             !currentGame 
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
@@ -86,7 +140,8 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                     {GAMES.map(game => (
                         <Link 
                             key={game.id}
-                            href={`/leaderboard?game=${game.id}`} 
+                            href={getUrl(game.id, activePeriod)}
+                            preserveScroll
                             className={`px-6 py-3 rounded-full font-bold transition-all ${
                                 currentGame === game.id 
                                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
@@ -108,20 +163,21 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                                     <th className="py-5 px-6 font-bold text-slate-500 uppercase tracking-wider text-sm">Game</th>
                                     <th className="py-5 px-6 font-bold text-slate-500 uppercase tracking-wider text-sm text-right">Score / Wins</th>
                                     <th className="py-5 px-6 font-bold text-slate-500 uppercase tracking-wider text-sm text-right">Losses</th>
+                                    <th className="py-5 px-6 font-bold text-slate-500 uppercase tracking-wider text-sm text-right">Date Achieved</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                                 {leaderboards.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="py-12 text-center text-slate-500 font-medium">
-                                            No scores recorded yet. Be the first!
+                                        <td colSpan={6} className="py-12 text-center text-slate-500 font-medium">
+                                            No scores recorded in this period. Be the first!
                                         </td>
                                     </tr>
                                 ) : (
                                     leaderboards.map((lb, idx) => {
                                         const isScoreGame = lb.game_id === 'flappy-bird' || lb.game_id === 'rogue-grid' || lb.game_id === '2048';
                                         return (
-                                            <tr key={lb.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                                                 <td className="py-5 px-6">
                                                     {idx < 3 ? (
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
@@ -136,7 +192,7 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                                                     )}
                                                 </td>
                                                 <td className="py-5 px-6 font-bold text-lg">{lb.player_name}</td>
-                                                <td className="py-5 px-6 text-slate-500 dark:text-slate-400 font-medium">
+                                                <td className="py-5 px-6 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
                                                     {GAMES.find(g => g.id === lb.game_id)?.name || lb.game_id}
                                                 </td>
                                                 <td className="py-5 px-6 text-right font-black text-indigo-600 dark:text-indigo-400">
@@ -144,6 +200,12 @@ export default function Leaderboard({ leaderboards, currentGame }: Props) {
                                                 </td>
                                                 <td className="py-5 px-6 text-right font-medium text-slate-500">
                                                     {isScoreGame ? '-' : lb.losses}
+                                                </td>
+                                                <td className="py-5 px-6 text-right text-slate-500 dark:text-slate-400 text-sm font-medium whitespace-nowrap">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Calendar className="w-4 h-4 opacity-50" />
+                                                        {formatDate(lb.last_played_at)}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

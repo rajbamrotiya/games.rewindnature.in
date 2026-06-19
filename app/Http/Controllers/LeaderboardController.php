@@ -14,21 +14,35 @@ class LeaderboardController extends Controller
     public function index(Request $request)
     {
         $gameId = $request->query('game');
+        $period = $request->query('period', 'all_time');
 
         $query = Leaderboard::query();
+        
         if ($gameId) {
             $query->where('game_id', $gameId);
         }
 
-        // We can sort by either wins or high_score, let's sort by high_score desc, then wins desc
-        $leaderboards = $query->orderBy('high_score', 'desc')
-                              ->orderBy('wins', 'desc')
-                              ->limit(100)
-                              ->get();
+        if ($period === 'daily') {
+            $query->whereDate('created_at', today());
+        } elseif ($period === 'weekly') {
+            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+        } elseif ($period === 'monthly') {
+            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+        } elseif ($period === 'yearly') {
+            $query->whereYear('created_at', now()->year);
+        }
+
+        $leaderboards = $query->selectRaw('player_name, game_id, SUM(wins) as wins, SUM(losses) as losses, MAX(high_score) as high_score, MAX(created_at) as last_played_at')
+            ->groupBy('player_name', 'game_id')
+            ->orderByRaw('MAX(high_score) DESC')
+            ->orderByRaw('SUM(wins) DESC')
+            ->limit(100)
+            ->get();
 
         return Inertia::render('leaderboard/Index', [
             'leaderboards' => $leaderboards,
-            'currentGame' => $gameId
+            'currentGame' => $gameId,
+            'currentPeriod' => $period
         ]);
     }
 
@@ -45,21 +59,20 @@ class LeaderboardController extends Controller
             'score' => 'nullable|integer',
         ]);
 
-        $record = Leaderboard::firstOrNew([
-            'player_name' => $request->player_name,
-            'game_id' => $request->game_id,
-        ]);
-
+        $record = new Leaderboard();
+        $record->player_name = $request->player_name;
+        $record->game_id = $request->game_id;
+        
         if ($request->has('win') && $request->win) {
-            $record->wins += 1;
+            $record->wins = 1;
         }
 
         if ($request->has('loss') && $request->loss) {
-            $record->losses += 1;
+            $record->losses = 1;
         }
 
         if ($request->has('score')) {
-            $record->high_score = max($record->high_score, $request->score);
+            $record->high_score = $request->score;
         }
 
         $record->save();
