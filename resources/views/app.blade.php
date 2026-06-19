@@ -3,10 +3,10 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        
+
         {{-- Default SEO Meta Tags --}}
         <meta name="description" content="Rewind Nature Games - Play classic and modern single-player browser games like Checkers, Chess, Nine Men's Morris, and Rogue Grid with elegant UI and beautiful themes.">
-        
+
         {{-- Open Graph / Facebook --}}
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://games.rewindnature.in/">
@@ -50,6 +50,16 @@
         <link rel="icon" href="/favicon.png" type="image/png">
 
         @fonts
+
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZSX75D7LR4"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-ZSX75D7LR4');
+        </script>
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
