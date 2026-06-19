@@ -231,11 +231,16 @@ export default function FlappyBird() {
         drawBackground(ctx, canvas, scale, gameWidth, isDark);
 
         // Draw Score on Board
-        ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        ctx.font = `900 ${250 * scale}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(score.toString(), canvas.width / 2, canvas.height * 0.35);
+        ctx.fillStyle = isDark ? 'white' : 'black';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 8 * scale;
+        ctx.shadowOffsetY = 4 * scale;
+        ctx.font = `900 ${80 * scale}px sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText(score.toString(), canvas.width - (40 * scale), 40 * scale);
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
 
         // Update Bird
         bird.current.velocity += GRAVITY;
@@ -343,11 +348,16 @@ export default function FlappyBird() {
                     const BIRD_X = Math.min(250, gameWidth * 0.2);
                     drawBackground(ctx, canvasRef.current, scale, gameWidth, appearance === 'dark');
                     
-                    ctx.fillStyle = appearance === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    ctx.font = `900 ${250 * scale}px sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(score.toString(), canvasRef.current.width / 2, canvasRef.current.height * 0.35);
+                    ctx.fillStyle = appearance === 'dark' ? 'white' : 'black';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 8 * scale;
+                    ctx.shadowOffsetY = 4 * scale;
+                    ctx.font = `900 ${80 * scale}px sans-serif`;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(score.toString(), canvasRef.current.width - (40 * scale), 40 * scale);
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetY = 0;
 
                     drawBird(ctx, scale, BIRD_X, appearance === 'dark');
                 }
