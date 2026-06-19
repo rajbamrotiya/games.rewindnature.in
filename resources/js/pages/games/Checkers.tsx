@@ -381,6 +381,10 @@ export default function Checkers() {
         localStorage.setItem('checkers_lastMove', 'null');
         localStorage.setItem('checkers_showSetup', 'false');
         localStorage.setItem('checkers_playerColor', color);
+
+        if (firstTurn === 'AI') {
+            aiMakeMove(newBoard);
+        }
     };
 
     if (!stats) {
